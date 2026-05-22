@@ -1,0 +1,24 @@
+{
+  "name": "ggd-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Volunteer Management Telegram Bot for GGD",
+  "scripts": {
+    "dev": "vercel dev",
+    "typecheck": "tsc --noEmit",
+    "set-webhook": "npx tsx scripts/set-webhook.ts"
+  },
+  "dependencies": {
+    "grammy": "^1.30.0",
+    "@grammyjs/conversations": "^2.0.3",
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.2.0",
+    "typescript": "^5.6.0",
+    "tsx": "^4.19.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
