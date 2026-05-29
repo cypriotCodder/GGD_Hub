@@ -1,0 +1,22 @@
+{
+  "status": "ok",
+  "deployment": {
+    "id": "dpl_8Quxa8UCVePrtsrL7kJzwbHppGtg",
+    "url": "https://ggd-emrc6ks2u-cypriotcodders-projects.vercel.app",
+    "inspectorUrl": "https://vercel.com/cypriotcodders-projects/ggd-hub/8Quxa8UCVePrtsrL7kJzwbHppGtg",
+    "readyState": "READY",
+    "target": "production",
+    "deploymentApiUrl": "https://api.vercel.com/v13/deployments/dpl_8Quxa8UCVePrtsrL7kJzwbHppGtg"
+  },
+  "message": "Deployment ggd-emrc6ks2u-cypriotcodders-projects.vercel.app ready.",
+  "next": [
+    {
+      "command": "vercel inspect ggd-emrc6ks2u-cypriotcodders-projects.vercel.app",
+      "when": "Inspect deployment"
+    },
+    {
+      "command": "vercel deploy --prod",
+      "when": "Promote to production"
+    }
+  ]
+}
