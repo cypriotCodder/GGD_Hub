@@ -5,6 +5,7 @@
   "description": "Volunteer Management Telegram Bot for GGD",
   "scripts": {
     "dev": "vercel dev",
+    "build": "cd webapp && npm install && npm run build && cd .. && rm -rf public && cp -r webapp/dist public",
     "typecheck": "tsc --noEmit",
     "set-webhook": "npx tsx scripts/set-webhook.ts"
   },
