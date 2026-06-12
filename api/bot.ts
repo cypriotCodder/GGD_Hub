@@ -9,6 +9,6 @@ import { webhookCallback } from "grammy";
 import bot from "../src/bot";
 import { config } from "../src/config";
 
-export default webhookCallback(bot, "std/http", {
+export default webhookCallback(bot, "next-js", {
   secretToken: config.WEBHOOK_SECRET || undefined,
 });
