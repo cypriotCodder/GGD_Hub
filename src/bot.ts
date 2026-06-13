@@ -24,6 +24,8 @@ import adminFeature from "./features/admin";
 
 // Conversations
 import { standupConversation } from "./conversations/standup";
+import { addCommitteeConversation } from "./conversations/admin_add_committee";
+import { promoteLeaderConversation } from "./conversations/admin_promote";
 
 // ============================================================
 // Bot Instance (module scope — reused across warm invocations)
@@ -50,6 +52,8 @@ bot.use(
 
 // 3. Register conversation definitions
 bot.use(createConversation(standupConversation, "standup"));
+bot.use(createConversation(addCommitteeConversation, "addCommittee"));
+bot.use(createConversation(promoteLeaderConversation, "promoteLeader"));
 
 // 4. Handle the "Start Standup" button from cron DMs
 bot.callbackQuery("start_standup", async (ctx) => {

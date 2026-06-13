@@ -7,7 +7,7 @@
  * /admin_broadcast     — send a message to every registered user
  */
 
-import { Composer } from "grammy";
+import { Composer, InlineKeyboard } from "grammy";
 import type { MyContext } from "../types";
 import { isAdmin } from "../config";
 import {
@@ -33,6 +33,39 @@ function denyIfNotAdmin(ctx: MyContext): boolean {
   }
   return false;
 }
+
+// ──────────────────────────────────────────────
+// /admin (Interactive Menu)
+// ──────────────────────────────────────────────
+
+composer.command("admin", async (ctx) => {
+  if (denyIfNotAdmin(ctx)) {
+    await ctx.reply("⛔ This command is restricted to admins.");
+    return;
+  }
+
+  const keyboard = new InlineKeyboard()
+    .text("➕ Add Committee", "admin_menu_add_committee").row()
+    .text("⭐ Promote Leader", "admin_menu_promote_leader").row()
+    .webApp("🖥️ Open Dashboard", "https://ggd-hub.vercel.app/");
+
+  await ctx.reply("🛠 <b>Admin Menu</b>\n\nWhat would you like to do?", {
+    parse_mode: "HTML",
+    reply_markup: keyboard,
+  });
+});
+
+composer.callbackQuery("admin_menu_add_committee", async (ctx) => {
+  if (denyIfNotAdmin(ctx)) return;
+  await ctx.answerCallbackQuery();
+  await ctx.conversation.enter("addCommittee");
+});
+
+composer.callbackQuery("admin_menu_promote_leader", async (ctx) => {
+  if (denyIfNotAdmin(ctx)) return;
+  await ctx.answerCallbackQuery();
+  await ctx.conversation.enter("promoteLeader");
+});
 
 // ──────────────────────────────────────────────
 // /admin_add_points <telegram_id> <amount>
