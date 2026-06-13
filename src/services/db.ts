@@ -132,6 +132,43 @@ export async function createCommittee(
   return data as Committee;
 }
 
+/** Update an existing committee */
+export async function updateCommittee(
+  committeeId: string,
+  updates: Partial<CommitteeInsert>
+): Promise<Committee> {
+  const { data, error } = await supabase
+    .from("committees")
+    .update(updates)
+    .eq("id", committeeId)
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to update committee: ${error.message}`);
+  return data as Committee;
+}
+
+/** Delete a committee and its memberships */
+export async function deleteCommittee(committeeId: string): Promise<void> {
+  // Remove memberships first (FK constraint)
+  const { error: memberError } = await supabase
+    .from("user_committees")
+    .delete()
+    .eq("committee_id", committeeId);
+
+  if (memberError)
+    throw new Error(
+      `Failed to remove committee members: ${memberError.message}`
+    );
+
+  const { error } = await supabase
+    .from("committees")
+    .delete()
+    .eq("id", committeeId);
+
+  if (error) throw new Error(`Failed to delete committee: ${error.message}`);
+}
+
 // ============================================================
 // User ↔ Committee Membership
 // ============================================================

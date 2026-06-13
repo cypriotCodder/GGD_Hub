@@ -46,8 +46,13 @@ composer.command("admin", async (ctx) => {
 
   const keyboard = new InlineKeyboard()
     .text("➕ Add Committee", "admin_menu_add_committee").row()
-    .text("⭐ Promote Leader", "admin_menu_promote_leader").row()
-    .webApp("🖥️ Open Dashboard", "https://ggd-hub.vercel.app/");
+    .text("⭐ Promote Leader", "admin_menu_promote_leader");
+
+  if (ctx.chat?.type === "private") {
+    keyboard.row().webApp("🖥️ Open Dashboard", "https://ggd-hub.vercel.app/");
+  } else {
+    keyboard.row().text("🖥️ Open Dashboard (DM the bot!)", "admin_menu_no_op");
+  }
 
   await ctx.reply("🛠 <b>Admin Menu</b>\n\nWhat would you like to do?", {
     parse_mode: "HTML",

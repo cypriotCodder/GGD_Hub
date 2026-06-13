@@ -38,8 +38,15 @@ export const config = {
     .filter(Boolean)
     .map(Number),
 
-  /** Day of week to send standups (0 = Sunday, 1 = Monday, ..., 6 = Saturday) */
-  STANDUP_DAY: Number(optionalEnv("STANDUP_DAY", "1")), // Default: Monday
+  /** Comma-separated days of week to send standups (0=Sun, 1=Mon, ..., 6=Sat) */
+  STANDUP_DAYS: optionalEnv("STANDUP_DAYS", "1")
+    .split(",")
+    .map((d) => d.trim())
+    .filter(Boolean)
+    .map(Number),
+
+  /** Hour (0–23 UTC) at which standup reminders should fire */
+  STANDUP_HOUR: Number(optionalEnv("STANDUP_HOUR", "9")),
 } as const;
 
 /** Check if a Telegram user ID has admin privileges */

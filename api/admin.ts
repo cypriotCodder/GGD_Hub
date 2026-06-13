@@ -1,42 +1,34 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import crypto from "crypto";
+import { validate } from "@tma.js/init-data-node";
+import { Bot } from "grammy";
 import { config, isAdmin } from "../src/config";
 import {
   getCommittees,
   getAllUsers,
   createCommittee,
+  updateCommittee,
+  deleteCommittee,
   joinCommittee,
+  getLeaderboard,
+  getCommitteeMembers,
 } from "../src/services/db";
 
-// Validate Telegram WebApp initData
-function validateInitData(initData: string, botToken: string): boolean {
-  const urlParams = new URLSearchParams(initData);
-  const hash = urlParams.get("hash");
-  if (!hash) return false;
-  urlParams.delete("hash");
-
-  const dataCheckString = Array.from(urlParams.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
-    .join("\n");
-
-  const secretKey = crypto
-    .createHmac("sha256", "WebAppData")
-    .update(botToken)
-    .digest();
-  const calculatedHash = crypto
-    .createHmac("sha256", secretKey)
-    .update(dataCheckString)
-    .digest("hex");
-
-  return calculatedHash === hash;
-}
+const bot = new Bot(config.BOT_TOKEN);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const initData = req.headers["x-telegram-init-data"] as string;
-    if (!initData || !validateInitData(initData, config.BOT_TOKEN)) {
-      return res.status(401).json({ error: "Unauthorized / Invalid initData" });
+    if (!initData) {
+      return res.status(401).json({ error: "Missing initData" });
+    }
+
+    try {
+      validate(initData, config.BOT_TOKEN);
+    } catch (e: any) {
+      console.error("InitData Validation Failed. Error:", e.message);
+      console.error("InitData received:", initData);
+      console.error("Bot Token prefix:", config.BOT_TOKEN.substring(0, 10));
+      return res.status(401).json({ error: "Unauthorized / Invalid initData: " + e.message });
     }
 
     // Extract user from initData
@@ -53,9 +45,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Handle GET: Fetch all dashboard data
     if (req.method === "GET") {
-      const committees = await getCommittees();
-      const users = await getAllUsers();
-      return res.status(200).json({ committees, users });
+      const [committees, users, leaderboard] = await Promise.all([
+        getCommittees(),
+        getAllUsers(),
+        getLeaderboard(undefined, 25),
+      ]);
+      const settings = {
+        standupDays: config.STANDUP_DAYS,
+        standupHour: config.STANDUP_HOUR,
+        cronSecured: !!config.CRON_SECRET,
+      };
+      return res.status(200).json({ committees, users, leaderboard, settings });
     }
 
     // Handle POST: Actions
@@ -77,6 +77,55 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           "leader"
         );
         return res.status(200).json({ success: true });
+      }
+
+      if (action === "EDIT_COMMITTEE") {
+        const c = await updateCommittee(payload.id, {
+          name: payload.name,
+          chat_id: Number(payload.chat_id),
+        });
+        return res.status(200).json({ success: true, committee: c });
+      }
+
+      if (action === "DELETE_COMMITTEE") {
+        await deleteCommittee(payload.id);
+        return res.status(200).json({ success: true });
+      }
+
+      if (action === "BROADCAST") {
+        const { message, committeeId } = payload;
+        if (!message || !message.trim()) {
+          return res.status(400).json({ error: "Message is required" });
+        }
+
+        // Determine recipients
+        let recipients: { telegram_id: number }[] = [];
+        if (committeeId) {
+          const members = await getCommitteeMembers(committeeId);
+          recipients = members.map((m: any) => ({ telegram_id: m.user_id }));
+        } else {
+          recipients = await getAllUsers();
+        }
+
+        let sent = 0;
+        let failed = 0;
+        for (const user of recipients) {
+          try {
+            await bot.api.sendMessage(
+              user.telegram_id,
+              `📢 <b>Duyuru / Announcement</b>\n\n${message.trim()}`,
+              { parse_mode: "HTML" }
+            );
+            sent++;
+          } catch (e: any) {
+            failed++;
+            console.error(
+              `[Broadcast] Failed to send to ${user.telegram_id}:`,
+              e?.description || e?.message
+            );
+          }
+        }
+        return res.status(200).json({ success: true, sent, failed });
       }
 
       return res.status(400).json({ error: "Unknown action" });

@@ -28,10 +28,10 @@ export default async function handler(
 
   // --- Day-of-week check (Hobby plan can only schedule daily) ---
   const today = new Date().getUTCDay(); // 0 = Sunday, 1 = Monday, ...
-  if (today !== config.STANDUP_DAY) {
+  if (!config.STANDUP_DAYS.includes(today)) {
     res.status(200).json({
       skipped: true,
-      reason: `Today is day ${today}, standups run on day ${config.STANDUP_DAY}`,
+      reason: `Today is day ${today}, standups run on days [${config.STANDUP_DAYS.join(", ")}]`,
     });
     return;
   }
