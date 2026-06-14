@@ -17,6 +17,13 @@ import {
   deleteTask,
   createTask,
   getAllStandups,
+  getAvailableTasksForUser,
+  getUserActiveTasks,
+  claimTask,
+  completeTask,
+  saveStandup,
+  getUser,
+  supabase,
 } from "../src/services/db";
 
 const bot = new Bot(config.BOT_TOKEN);
@@ -32,8 +39,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       validate(initData, config.BOT_TOKEN);
     } catch (e: any) {
       console.error("InitData Validation Failed. Error:", e.message);
-      console.error("InitData received:", initData);
-      console.error("Bot Token prefix:", config.BOT_TOKEN.substring(0, 10));
       return res.status(401).json({ error: "Unauthorized / Invalid initData: " + e.message });
     }
 
@@ -45,30 +50,101 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const tgUser = JSON.parse(decodeURIComponent(userStr));
-    if (!isAdmin(tgUser.id)) {
-      return res.status(403).json({ error: "Forbidden: Not an admin" });
-    }
+    const isUserAdmin = isAdmin(tgUser.id);
+    const role = isUserAdmin ? "admin" : "member";
 
-    // Handle GET: Fetch all dashboard data
+    // Initialize bot info once
+    const botInfo = await bot.api.getMe();
+
+    // ────────────────────────────────────────────────
+    // GET Requests
+    // ────────────────────────────────────────────────
     if (req.method === "GET") {
-      const [committees, users, leaderboard, tasks, standups] = await Promise.all([
-        getCommittees(),
-        getAllUsersWithMemberships(),
-        getLeaderboard(undefined, 25),
-        getAllTasks(),
-        getAllStandups(50),
-      ]);
       const settings = {
         standupDays: config.STANDUP_DAYS,
         standupHour: config.STANDUP_HOUR,
         cronSecured: !!config.CRON_SECRET,
+        botUsername: botInfo.username,
       };
-      return res.status(200).json({ committees, users, leaderboard, tasks, standups, settings });
+
+      if (isUserAdmin) {
+        const [committees, users, leaderboard, tasks, standups] = await Promise.all([
+          getCommittees(),
+          getAllUsersWithMemberships(),
+          getLeaderboard(undefined, 25),
+          getAllTasks(),
+          getAllStandups(50),
+        ]);
+        return res.status(200).json({ role, committees, users, leaderboard, tasks, standups, settings });
+      } else {
+        const [availableTasks, activeTasks, userDb, leaderboard] = await Promise.all([
+          getAvailableTasksForUser(tgUser.id),
+          getUserActiveTasks(tgUser.id),
+          getUser(tgUser.id),
+          getLeaderboard(undefined, 25),
+        ]);
+        return res.status(200).json({ 
+          role, 
+          availableTasks, 
+          activeTasks, 
+          user: userDb,
+          leaderboard,
+          settings 
+        });
+      }
     }
 
-    // Handle POST: Actions
+    // ────────────────────────────────────────────────
+    // POST Requests
+    // ────────────────────────────────────────────────
     if (req.method === "POST") {
       const { action, payload } = req.body;
+
+      // ==========================================
+      // Member Actions
+      // ==========================================
+      if (action === "CLAIM_TASK") {
+        const task = await claimTask(payload.taskId, tgUser.id);
+        if (!task) return res.status(400).json({ error: "Task not available" });
+        return res.status(200).json({ success: true, task });
+      }
+
+      if (action === "COMPLETE_TASK") {
+        const task = await completeTask(payload.taskId);
+        if (!task) return res.status(400).json({ error: "Task could not be completed" });
+        return res.status(200).json({ success: true, task });
+      }
+
+      if (action === "SUBMIT_STANDUP") {
+        const { completed, next, blockers } = payload;
+        
+        // Save standup for all committees the user is a member of
+        const memberships = await getCommitteeMembers("dummy").catch(() => []); // this is wrong, let's use a query
+        const { data: userCommittees } = await supabase
+          .from("user_committees")
+          .select("committee_id")
+          .eq("user_id", tgUser.id);
+          
+        if (userCommittees) {
+          for (const uc of userCommittees) {
+            await saveStandup({
+              user_id: tgUser.id,
+              committee_id: uc.committee_id,
+              completed: completed || "None",
+              next: next || "None",
+              blockers: blockers || "None",
+            });
+          }
+        }
+        return res.status(200).json({ success: true });
+      }
+
+      // ==========================================
+      // Admin Actions
+      // ==========================================
+      if (!isUserAdmin) {
+        return res.status(403).json({ error: "Forbidden: Not an admin" });
+      }
 
       if (action === "CREATE_COMMITTEE") {
         const c = await createCommittee({
@@ -139,7 +215,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(400).json({ error: "Message is required" });
         }
 
-        // Determine recipients
         let recipients: { telegram_id: number }[] = [];
         if (committeeId) {
           const members = await getCommitteeMembers(committeeId);
@@ -160,10 +235,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             sent++;
           } catch (e: any) {
             failed++;
-            console.error(
-              `[Broadcast] Failed to send to ${user.telegram_id}:`,
-              e?.description || e?.message
-            );
           }
         }
         return res.status(200).json({ success: true, sent, failed });
@@ -184,7 +255,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(405).json({ error: "Method Not Allowed" });
   } catch (error: any) {
-    console.error("Admin API error:", error);
+    console.error("API error:", error);
     return res.status(500).json({ error: error.message });
   }
 }

@@ -31,6 +31,25 @@ composer.command("start", async (ctx) => {
     // Upsert user on every /start (idempotent)
     await upsertUser(from.id, from.username ?? null, from.first_name ?? null);
 
+    // Deep link handling: /start join_<committee_id>
+    const payload = ctx.match;
+    if (payload && typeof payload === "string" && payload.startsWith("join_")) {
+      const committeeId = payload.replace("join_", "");
+      try {
+        await joinCommittee(from.id, committeeId);
+        const committee = await getCommittee(committeeId);
+        await ctx.reply(
+          `🎉 <b>You've joined ${committee?.name ?? "the committee"}!</b>\n\n` +
+          `Tap the menu button to open the Member Portal and view your tasks.`,
+          { parse_mode: "HTML" }
+        );
+        return;
+      } catch (err) {
+        console.error("Deep link join failed:", err);
+        await ctx.reply("❌ Invalid invite link or an error occurred.");
+      }
+    }
+
     // Check if user already belongs to any committees
     const memberships = await getUserCommittees(from.id);
 

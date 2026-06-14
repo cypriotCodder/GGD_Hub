@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Users, LayoutList, Trophy, Plus, ShieldAlert, Pencil, Trash2, X, Settings, CheckCircle, AlertTriangle, Megaphone, Send, CheckSquare, MessageSquare } from 'lucide-react';
+import { Users, LayoutList, Trophy, Plus, ShieldAlert, Pencil, Trash2, X, Settings, CheckCircle, AlertTriangle, Megaphone, Send, CheckSquare, MessageSquare, Link } from 'lucide-react';
+import MemberPortal from './MemberPortal';
 import './index.css';
 
 class ErrorBoundary extends React.Component {
@@ -81,7 +82,7 @@ function Dashboard() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin', {
+      const res = await fetch('/api/app', {
         headers: { 'x-telegram-init-data': getInitData() }
       });
       if (!res.ok) {
@@ -97,7 +98,7 @@ function Dashboard() {
   };
 
   const apiPost = async (action, payload) => {
-    const res = await fetch('/api/admin', {
+    const res = await fetch('/api/app', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -115,6 +116,19 @@ function Dashboard() {
   const showAlert = (msg) => {
     if (window.Telegram?.WebApp) window.Telegram.WebApp.showAlert(msg);
     else alert(msg);
+  };
+
+  const copyInviteLink = (committeeId) => {
+    if (!data.settings?.botUsername) {
+      showAlert('Bot username not configured.');
+      return;
+    }
+    const link = `https://t.me/${data.settings.botUsername}?start=join_${committeeId}`;
+    navigator.clipboard.writeText(link).then(() => {
+      showAlert('Invite link copied to clipboard!');
+    }).catch(() => {
+      showAlert('Failed to copy link.');
+    });
   };
 
   const handleCreate = async () => {
@@ -258,6 +272,10 @@ function Dashboard() {
     { key: 'settings', label: 'Settings', icon: <Settings size={15} /> },
   ];
 
+  if (data.role === 'member') {
+    return <MemberPortal data={data} apiPost={apiPost} fetchData={fetchData} showAlert={showAlert} />;
+  }
+
   return (
     <div className="fade-in">
       {/* Header */}
@@ -323,12 +341,14 @@ function Dashboard() {
                       <div className="card-meta">Chat ID: {c.chat_id}</div>
                     </div>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <button className="btn-small" onClick={() => startEdit(c)}>
-                        <Pencil size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                        Edit
+                      <button className="btn-icon" onClick={() => copyInviteLink(c.id)} title="Copy Invite Link">
+                        <Link size={14} />
                       </button>
-                      <button className="btn-small btn-danger" onClick={() => handleDelete(c)}>
-                        <Trash2 size={12} />
+                      <button className="btn-icon" onClick={() => startEdit(c)}>
+                        <Pencil size={14} />
+                      </button>
+                      <button className="btn-icon" onClick={() => handleDelete(c)}>
+                        <Trash2 size={14} color="#ff3b30" />
                       </button>
                     </div>
                   </div>

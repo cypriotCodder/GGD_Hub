@@ -391,6 +391,29 @@ export async function getAllTasks(): Promise<any[]> {
   return data || [];
 }
 
+/** Get tasks available for a specific user to claim (based on their committees) */
+export async function getAvailableTasksForUser(telegramId: number): Promise<any[]> {
+  // First get user's committees
+  const { data: userCommittees } = await supabase
+    .from("user_committees")
+    .select("committee_id")
+    .eq("user_id", telegramId);
+    
+  if (!userCommittees || userCommittees.length === 0) return [];
+  
+  const committeeIds = userCommittees.map(uc => uc.committee_id);
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*, committees(name), created_user:users!created_by(first_name)")
+    .eq("status", "pending")
+    .in("committee_id", committeeIds)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(`Failed to get available tasks: ${error.message}`);
+  return data || [];
+}
+
 /** Delete a task by ID */
 export async function deleteTask(taskId: string): Promise<void> {
   const { error } = await supabase

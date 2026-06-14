@@ -80,7 +80,26 @@ bot.use(doneFeature);
 bot.use(leaderboardFeature);
 bot.use(adminFeature);
 
-// 6. Catch-all for unhandled callback queries (prevents loading spinners)
+// 6. Report chat ID when added to a new group
+bot.on("my_chat_member", async (ctx) => {
+  const newStatus = ctx.myChatMember.new_chat_member.status;
+  if (newStatus === "member" || newStatus === "administrator") {
+    const chat = ctx.chat;
+    try {
+      await ctx.api.sendMessage(
+        chat.id,
+        `👋 <b>Hi! Thanks for adding me.</b>\n\n` +
+        `My Chat ID for this group is: <code>${chat.id}</code>\n\n` +
+        `Use this ID in the Web Dashboard to register this committee.`,
+        { parse_mode: "HTML" }
+      );
+    } catch (e) {
+      console.error("Failed to send welcome message to new group:", e);
+    }
+  }
+});
+
+// 7. Catch-all for unhandled callback queries (prevents loading spinners)
 bot.on("callback_query:data", async (ctx) => {
   console.warn(`[Bot] Unhandled callback query: ${ctx.callbackQuery.data}`);
   await ctx.answerCallbackQuery();
