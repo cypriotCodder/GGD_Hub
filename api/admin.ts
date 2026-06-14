@@ -11,6 +11,8 @@ import {
   joinCommittee,
   getLeaderboard,
   getCommitteeMembers,
+  getAllUsersWithMemberships,
+  removeFromCommittee,
 } from "../src/services/db";
 
 const bot = new Bot(config.BOT_TOKEN);
@@ -47,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === "GET") {
       const [committees, users, leaderboard] = await Promise.all([
         getCommittees(),
-        getAllUsers(),
+        getAllUsersWithMemberships(),
         getLeaderboard(undefined, 25),
       ]);
       const settings = {
@@ -126,6 +128,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         }
         return res.status(200).json({ success: true, sent, failed });
+      }
+
+      if (action === "REMOVE_MEMBER") {
+        await removeFromCommittee(Number(payload.telegram_id), payload.committee_id);
+        return res.status(200).json({ success: true });
+      }
+
+      if (action === "CHANGE_ROLE") {
+        await joinCommittee(Number(payload.telegram_id), payload.committee_id, payload.role);
+        return res.status(200).json({ success: true });
       }
 
       return res.status(400).json({ error: "Unknown action" });

@@ -169,6 +169,23 @@ function Dashboard() {
     }
   };
 
+  const handleRemoveMember = async (telegramId, committeeId, committeeName) => {
+    if (!window.confirm(`Remove user from ${committeeName}?`)) return;
+    try {
+      await apiPost('REMOVE_MEMBER', { telegram_id: telegramId, committee_id: committeeId });
+      fetchData();
+    } catch (err) { showAlert(err.message); }
+  };
+
+  const handleChangeRole = async (telegramId, committeeId, currentRole, committeeName) => {
+    const newRole = currentRole === 'leader' ? 'member' : 'leader';
+    if (!window.confirm(`Change role in ${committeeName} to ${newRole}?`)) return;
+    try {
+      await apiPost('CHANGE_ROLE', { telegram_id: telegramId, committee_id: committeeId, role: newRole });
+      fetchData();
+    } catch (err) { showAlert(err.message); }
+  };
+
   const isLocalDev = typeof window !== 'undefined' &&
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
@@ -382,6 +399,29 @@ function Dashboard() {
                     <div className="card-meta">ID: {u.telegram_id} · {u.points} pts</div>
                   </div>
                 </div>
+
+                {u.memberships && u.memberships.length > 0 && (
+                  <div className="memberships-list">
+                    {u.memberships.map(m => (
+                      <div key={m.committee_id} className={`membership-badge ${m.role === 'leader' ? 'leader' : ''}`}>
+                        <span 
+                          className="membership-role-toggle"
+                          onClick={() => handleChangeRole(u.telegram_id, m.committee_id, m.role, m.name)}
+                          title="Click to toggle role"
+                        >
+                          {m.name} • <span style={{textTransform: 'capitalize'}}>{m.role}</span>
+                        </span>
+                        <button 
+                          className="membership-remove"
+                          onClick={() => handleRemoveMember(u.telegram_id, m.committee_id, m.name)}
+                          title="Remove from committee"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
 

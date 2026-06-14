@@ -219,6 +219,20 @@ export async function joinCommittee(
   if (error) throw new Error(`Failed to join committee: ${error.message}`);
 }
 
+/** Remove a user from a committee */
+export async function removeFromCommittee(
+  telegramId: number,
+  committeeId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from("user_committees")
+    .delete()
+    .eq("user_id", telegramId)
+    .eq("committee_id", committeeId);
+
+  if (error) throw new Error(`Failed to remove from committee: ${error.message}`);
+}
+
 /** Check if a user is a leader of a specific committee */
 export async function isLeader(
   telegramId: number,
@@ -360,6 +374,31 @@ export async function getAllUsers(): Promise<User[]> {
 
   if (error) throw new Error(`Failed to get all users: ${error.message}`);
   return (data as User[]) || [];
+}
+
+/** Get all users, enriched with an array of their memberships */
+export async function getAllUsersWithMemberships(): Promise<(User & { memberships: { committee_id: string; role: string; name: string }[] })[]> {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*, user_committees(committee_id, role, committees(name))")
+    .order("created_at");
+
+  if (error) throw new Error(`Failed to get users with memberships: ${error.message}`);
+
+  return ((data as any[]) || []).map(row => {
+    return {
+      telegram_id: row.telegram_id,
+      username: row.username,
+      first_name: row.first_name,
+      points: row.points,
+      created_at: row.created_at,
+      memberships: (row.user_committees || []).map((uc: any) => ({
+        committee_id: uc.committee_id,
+        role: uc.role,
+        name: uc.committees?.name || "Unknown",
+      })),
+    };
+  });
 }
 
 // ============================================================
