@@ -13,6 +13,8 @@ import {
   getCommitteeMembers,
   getAllUsersWithMemberships,
   removeFromCommittee,
+  getAllTasks,
+  deleteTask,
 } from "../src/services/db";
 
 const bot = new Bot(config.BOT_TOKEN);
@@ -47,17 +49,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Handle GET: Fetch all dashboard data
     if (req.method === "GET") {
-      const [committees, users, leaderboard] = await Promise.all([
+      const [committees, users, leaderboard, tasks] = await Promise.all([
         getCommittees(),
         getAllUsersWithMemberships(),
         getLeaderboard(undefined, 25),
+        getAllTasks(),
       ]);
       const settings = {
         standupDays: config.STANDUP_DAYS,
         standupHour: config.STANDUP_HOUR,
         cronSecured: !!config.CRON_SECRET,
       };
-      return res.status(200).json({ committees, users, leaderboard, settings });
+      return res.status(200).json({ committees, users, leaderboard, tasks, settings });
     }
 
     // Handle POST: Actions
@@ -72,11 +75,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ success: true, committee: c });
       }
 
-      if (action === "PROMOTE_LEADER") {
+      if (action === "ADD_MEMBER") {
         await joinCommittee(
           Number(payload.telegram_id),
           payload.committee_id,
-          "leader"
+          payload.role || "member"
         );
         return res.status(200).json({ success: true });
       }
@@ -91,6 +94,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (action === "DELETE_COMMITTEE") {
         await deleteCommittee(payload.id);
+        return res.status(200).json({ success: true });
+      }
+
+      if (action === "DELETE_TASK") {
+        await deleteTask(payload.id);
         return res.status(200).json({ success: true });
       }
 

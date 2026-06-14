@@ -365,6 +365,27 @@ export async function updateTaskMessageId(
     throw new Error(`Failed to update task message_id: ${error.message}`);
 }
 
+/** Get all tasks across the hub with relational data */
+export async function getAllTasks(): Promise<any[]> {
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*, committees(name), created_user:users!created_by(first_name), assigned_user:users!assigned_to(first_name)")
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(`Failed to get all tasks: ${error.message}`);
+  return data || [];
+}
+
+/** Delete a task by ID */
+export async function deleteTask(taskId: string): Promise<void> {
+  const { error } = await supabase
+    .from("tasks")
+    .delete()
+    .eq("id", taskId);
+
+  if (error) throw new Error(`Failed to delete task: ${error.message}`);
+}
+
 /** Get all registered users (for admin broadcast) */
 export async function getAllUsers(): Promise<User[]> {
   const { data, error } = await supabase

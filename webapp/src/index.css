@@ -206,6 +206,33 @@ body {
   color: #ff3b30;
 }
 
+/* ---- Tasks ---- */
+.task-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.task-status-pending {
+  background: rgba(255, 149, 0, 0.15);
+  color: #ff9500;
+}
+
+.task-status-in_progress {
+  background: rgba(0, 122, 255, 0.15);
+  color: var(--accent);
+}
+
+.task-status-completed {
+  background: rgba(52, 199, 89, 0.15);
+  color: #34c759;
+}
+
 /* ---- Buttons ---- */
 button, .btn {
   border: none;

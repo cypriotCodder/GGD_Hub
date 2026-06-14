@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, LayoutList, Trophy, Plus, ShieldAlert, Pencil, Trash2, X, Settings, CheckCircle, AlertTriangle, Megaphone, Send } from 'lucide-react';
+import { Users, LayoutList, Trophy, Plus, ShieldAlert, Pencil, Trash2, X, Settings, CheckCircle, AlertTriangle, Megaphone, Send, CheckSquare } from 'lucide-react';
 import './index.css';
 
 class ErrorBoundary extends React.Component {
@@ -28,7 +28,7 @@ class ErrorBoundary extends React.Component {
 }
 
 function Dashboard() {
-  const [data, setData] = useState({ committees: [], users: [], leaderboard: [], settings: null });
+  const [data, setData] = useState({ committees: [], users: [], leaderboard: [], tasks: [], settings: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState('committees');
@@ -43,10 +43,11 @@ function Dashboard() {
   const [editName, setEditName] = useState('');
   const [editChat, setEditChat] = useState('');
 
-  // Promote Leader form
-  const [showPromote, setShowPromote] = useState(false);
-  const [promoteUser, setPromoteUser] = useState('');
-  const [promoteCommittee, setPromoteCommittee] = useState('');
+  // Add Member form
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [addMemberUser, setAddMemberUser] = useState('');
+  const [addMemberCommittee, setAddMemberCommittee] = useState('');
+  const [addMemberRole, setAddMemberRole] = useState('member');
 
   // Broadcast
   const [showBroadcast, setShowBroadcast] = useState(false);
@@ -139,10 +140,19 @@ function Dashboard() {
     } catch (err) { showAlert(err.message); }
   };
 
-  const handlePromote = async () => {
+  const handleDeleteTask = async (t) => {
+    const confirmed = window.confirm(`Delete task "${t.title}"? This cannot be undone.`);
+    if (!confirmed) return;
     try {
-      await apiPost('PROMOTE_LEADER', { telegram_id: promoteUser, committee_id: promoteCommittee });
-      setShowPromote(false); setPromoteUser(''); setPromoteCommittee('');
+      await apiPost('DELETE_TASK', { id: t.id });
+      fetchData();
+    } catch (err) { showAlert(err.message); }
+  };
+
+  const handleAddMember = async () => {
+    try {
+      await apiPost('ADD_MEMBER', { telegram_id: addMemberUser, committee_id: addMemberCommittee, role: addMemberRole });
+      setShowAddMember(false); setAddMemberUser(''); setAddMemberCommittee(''); setAddMemberRole('member');
       fetchData();
     } catch (err) { showAlert(err.message); }
   };
@@ -215,6 +225,7 @@ function Dashboard() {
   const tabs = [
     { key: 'committees', label: 'Committees', icon: <LayoutList size={15} /> },
     { key: 'users', label: 'Members', icon: <Users size={15} /> },
+    { key: 'tasks', label: 'Tasks', icon: <CheckSquare size={15} /> },
     { key: 'leaderboard', label: 'Leaderboard', icon: <Trophy size={15} /> },
     { key: 'settings', label: 'Settings', icon: <Settings size={15} /> },
   ];
@@ -314,16 +325,16 @@ function Dashboard() {
                 <div className="section-title">Members</div>
                 <div className="section-count">{data.users.length} registered</div>
               </div>
-              <button className="btn-icon" onClick={() => setShowPromote(!showPromote)}>
-                {showPromote ? <X size={16} /> : <ShieldAlert size={16} />}
-                {showPromote ? 'Close' : 'Promote'}
+              <button className="btn-icon" onClick={() => setShowAddMember(!showAddMember)}>
+                {showAddMember ? <X size={16} /> : <Plus size={16} />}
+                {showAddMember ? 'Close' : 'Add Member'}
               </button>
             </div>
 
-            {showPromote && (
+            {showAddMember && (
               <div className="form-panel fade-in">
-                <h3>Promote to Leader</h3>
-                <select className="input" value={promoteUser} onChange={e => setPromoteUser(e.target.value)}>
+                <h3>Add to Committee</h3>
+                <select className="input" value={addMemberUser} onChange={e => setAddMemberUser(e.target.value)}>
                   <option value="">Select member…</option>
                   {data.users.map(u => (
                     <option key={u.telegram_id} value={u.telegram_id}>
@@ -331,14 +342,20 @@ function Dashboard() {
                     </option>
                   ))}
                 </select>
-                <select className="input" value={promoteCommittee} onChange={e => setPromoteCommittee(e.target.value)}>
-                  <option value="">Select committee…</option>
-                  {data.committees.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-                <button className="btn-primary" onClick={handlePromote} disabled={!promoteUser || !promoteCommittee}>
-                  Promote
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <select className="input" style={{ flex: 1 }} value={addMemberCommittee} onChange={e => setAddMemberCommittee(e.target.value)}>
+                    <option value="">Select committee…</option>
+                    {data.committees.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                  <select className="input" style={{ width: 110 }} value={addMemberRole} onChange={e => setAddMemberRole(e.target.value)}>
+                    <option value="member">Member</option>
+                    <option value="leader">Leader</option>
+                  </select>
+                </div>
+                <button className="btn-primary" onClick={handleAddMember} disabled={!addMemberUser || !addMemberCommittee}>
+                  Add Member
                 </button>
               </div>
             )}
@@ -464,6 +481,50 @@ function Dashboard() {
               <div className="empty">
                 <div className="empty-icon">🏆</div>
                 No scores yet
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ======== TASKS ======== */}
+        {tab === 'tasks' && (
+          <div className="fade-in">
+            <div className="section-header">
+              <div>
+                <div className="section-title">Tasks</div>
+                <div className="section-count">{(data.tasks || []).length} total tasks</div>
+              </div>
+            </div>
+
+            {(data.tasks || []).map(t => (
+              <div key={t.id} className="card">
+                <div className="card-row" style={{ alignItems: 'flex-start' }}>
+                  <div className="card-info">
+                    <div className="card-name" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      {t.title}
+                      <span className={`task-badge task-status-${t.status}`}>
+                        {t.status === 'in_progress' ? 'In Progress' : t.status === 'completed' ? 'Completed' : 'Pending'}
+                      </span>
+                    </div>
+                    {t.description && <div className="card-meta" style={{ marginTop: 4, marginBottom: 8, whiteSpace: 'normal', overflow: 'visible' }}>{t.description}</div>}
+                    <div className="card-meta" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--accent)' }}>🎯 {t.points} pts</span>
+                      {t.committees?.name && <span>🏢 {t.committees.name}</span>}
+                      {t.created_user?.first_name && <span>✏️ By {t.created_user.first_name}</span>}
+                      {t.assigned_user?.first_name && <span>👤 For {t.assigned_user.first_name}</span>}
+                    </div>
+                  </div>
+                  <button className="btn-small btn-danger" onClick={() => handleDeleteTask(t)} title="Delete Task" style={{ marginLeft: 12 }}>
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {(!data.tasks || data.tasks.length === 0) && (
+              <div className="empty">
+                <div className="empty-icon">✅</div>
+                No tasks available
               </div>
             )}
           </div>
