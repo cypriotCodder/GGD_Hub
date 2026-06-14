@@ -586,6 +586,42 @@ select.input {
   line-height: 1.6;
 }
 
+/* ---- Standups ---- */
+.standup-card {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.standup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.standup-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.standup-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  background: var(--surface);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+}
+
+.has-blockers {
+  color: #ff3b30;
+  background: rgba(255, 59, 48, 0.05);
+  border-left: 3px solid #ff3b30;
+}
+
 /* ---- Utility ---- */
 .fade-in {
   animation: fadeIn 0.3s ease;

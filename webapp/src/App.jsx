@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, LayoutList, Trophy, Plus, ShieldAlert, Pencil, Trash2, X, Settings, CheckCircle, AlertTriangle, Megaphone, Send, CheckSquare } from 'lucide-react';
+import { Users, LayoutList, Trophy, Plus, ShieldAlert, Pencil, Trash2, X, Settings, CheckCircle, AlertTriangle, Megaphone, Send, CheckSquare, MessageSquare } from 'lucide-react';
 import './index.css';
 
 class ErrorBoundary extends React.Component {
@@ -28,7 +28,7 @@ class ErrorBoundary extends React.Component {
 }
 
 function Dashboard() {
-  const [data, setData] = useState({ committees: [], users: [], leaderboard: [], tasks: [], settings: null });
+  const [data, setData] = useState({ committees: [], users: [], leaderboard: [], tasks: [], standups: [], settings: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState('committees');
@@ -48,6 +48,14 @@ function Dashboard() {
   const [addMemberUser, setAddMemberUser] = useState('');
   const [addMemberCommittee, setAddMemberCommittee] = useState('');
   const [addMemberRole, setAddMemberRole] = useState('member');
+
+  // Create Task form
+  const [showCreateTask, setShowCreateTask] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDesc, setNewTaskDesc] = useState('');
+  const [newTaskPoints, setNewTaskPoints] = useState(5);
+  const [newTaskCommittee, setNewTaskCommittee] = useState('');
+  const [newTaskAssignee, setNewTaskAssignee] = useState('');
 
   // Broadcast
   const [showBroadcast, setShowBroadcast] = useState(false);
@@ -149,6 +157,25 @@ function Dashboard() {
     } catch (err) { showAlert(err.message); }
   };
 
+  const handleCreateTask = async () => {
+    try {
+      await apiPost('CREATE_TASK', { 
+        title: newTaskTitle, 
+        description: newTaskDesc, 
+        points: newTaskPoints, 
+        committee_id: newTaskCommittee, 
+        assigned_to: newTaskAssignee 
+      });
+      setShowCreateTask(false);
+      setNewTaskTitle('');
+      setNewTaskDesc('');
+      setNewTaskPoints(5);
+      setNewTaskCommittee('');
+      setNewTaskAssignee('');
+      fetchData();
+    } catch (err) { showAlert(err.message); }
+  };
+
   const handleAddMember = async () => {
     try {
       await apiPost('ADD_MEMBER', { telegram_id: addMemberUser, committee_id: addMemberCommittee, role: addMemberRole });
@@ -226,6 +253,7 @@ function Dashboard() {
     { key: 'committees', label: 'Committees', icon: <LayoutList size={15} /> },
     { key: 'users', label: 'Members', icon: <Users size={15} /> },
     { key: 'tasks', label: 'Tasks', icon: <CheckSquare size={15} /> },
+    { key: 'standups', label: 'Standups', icon: <MessageSquare size={15} /> },
     { key: 'leaderboard', label: 'Leaderboard', icon: <Trophy size={15} /> },
     { key: 'settings', label: 'Settings', icon: <Settings size={15} /> },
   ];
@@ -494,7 +522,42 @@ function Dashboard() {
                 <div className="section-title">Tasks</div>
                 <div className="section-count">{(data.tasks || []).length} total tasks</div>
               </div>
+              <button className="btn-icon" onClick={() => setShowCreateTask(!showCreateTask)}>
+                {showCreateTask ? <X size={16} /> : <Plus size={16} />}
+                {showCreateTask ? 'Close' : 'Create Task'}
+              </button>
             </div>
+
+            {showCreateTask && (
+              <div className="form-panel fade-in">
+                <h3>Post a New Task</h3>
+                <input className="input" placeholder="Task Title" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} />
+                <input className="input" placeholder="Description (Optional)" value={newTaskDesc} onChange={e => setNewTaskDesc(e.target.value)} />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <select className="input" style={{ flex: 1 }} value={newTaskCommittee} onChange={e => setNewTaskCommittee(e.target.value)}>
+                    <option value="">Select committee…</option>
+                    {data.committees.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                  <input className="input" style={{ width: 90 }} type="number" placeholder="Points" value={newTaskPoints} onChange={e => setNewTaskPoints(Number(e.target.value))} />
+                </div>
+                <select className="input" value={newTaskAssignee} onChange={e => setNewTaskAssignee(e.target.value)}>
+                  <option value="">Assign to member… (Optional)</option>
+                  {data.users.map(u => (
+                    <option key={u.telegram_id} value={u.telegram_id}>
+                      {u.first_name} {u.username ? `(@${u.username})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <div className="settings-hint" style={{ marginBottom: 12, marginTop: -4 }}>
+                  If assigned, the user will receive a direct message notification.
+                </div>
+                <button className="btn-primary" onClick={handleCreateTask} disabled={!newTaskTitle || !newTaskCommittee}>
+                  Post Task
+                </button>
+              </div>
+            )}
 
             {(data.tasks || []).map(t => (
               <div key={t.id} className="card">
@@ -525,6 +588,54 @@ function Dashboard() {
               <div className="empty">
                 <div className="empty-icon">✅</div>
                 No tasks available
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ======== STANDUPS ======== */}
+        {tab === 'standups' && (
+          <div className="fade-in">
+            <div className="section-header">
+              <div>
+                <div className="section-title">Standup History</div>
+                <div className="section-count">{(data.standups || []).length} past standups</div>
+              </div>
+            </div>
+
+            {(data.standups || []).map(s => (
+              <div key={s.id} className="card standup-card">
+                <div className="card-info" style={{ marginBottom: 12 }}>
+                  <div className="card-name">
+                    {s.users?.first_name || 'Anonymous'}
+                    {s.users?.username ? ` (@${s.users.username})` : ''}
+                  </div>
+                  <div className="card-meta">
+                    🏢 {s.committees?.name || 'Unknown'} • 🕒 {new Date(s.created_at).toLocaleString()}
+                  </div>
+                </div>
+                
+                <div className="standup-section">
+                  <div className="standup-label">✅ Completed:</div>
+                  <div className="standup-text">{s.completed || 'N/A'}</div>
+                </div>
+                
+                <div className="standup-section">
+                  <div className="standup-label">⏭️ Next:</div>
+                  <div className="standup-text">{s.next || 'N/A'}</div>
+                </div>
+                
+                <div className="standup-section">
+                  <div className="standup-label">🚧 Blockers:</div>
+                  <div className={`standup-text ${s.blockers ? 'has-blockers' : ''}`}>{s.blockers || 'None'}</div>
+                </div>
+              </div>
+            ))}
+
+            {(!data.standups || data.standups.length === 0) && (
+              <div className="empty">
+                <div className="empty-icon">📝</div>
+                No standup reports yet
               </div>
             )}
           </div>

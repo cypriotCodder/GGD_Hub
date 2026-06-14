@@ -15,6 +15,8 @@ import {
   removeFromCommittee,
   getAllTasks,
   deleteTask,
+  createTask,
+  getAllStandups,
 } from "../src/services/db";
 
 const bot = new Bot(config.BOT_TOKEN);
@@ -49,18 +51,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Handle GET: Fetch all dashboard data
     if (req.method === "GET") {
-      const [committees, users, leaderboard, tasks] = await Promise.all([
+      const [committees, users, leaderboard, tasks, standups] = await Promise.all([
         getCommittees(),
         getAllUsersWithMemberships(),
         getLeaderboard(undefined, 25),
         getAllTasks(),
+        getAllStandups(50),
       ]);
       const settings = {
         standupDays: config.STANDUP_DAYS,
         standupHour: config.STANDUP_HOUR,
         cronSecured: !!config.CRON_SECRET,
       };
-      return res.status(200).json({ committees, users, leaderboard, tasks, settings });
+      return res.status(200).json({ committees, users, leaderboard, tasks, standups, settings });
     }
 
     // Handle POST: Actions
@@ -100,6 +103,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (action === "DELETE_TASK") {
         await deleteTask(payload.id);
         return res.status(200).json({ success: true });
+      }
+
+      if (action === "CREATE_TASK") {
+        const { title, description, points, committee_id, assigned_to } = payload;
+        
+        const task = await createTask({
+          title,
+          description: description || null,
+          point_value: Number(points) || 5,
+          committee_id,
+          created_by: tgUser.id,
+          assigned_to: assigned_to ? Number(assigned_to) : null,
+          status: assigned_to ? "in_progress" : "pending"
+        });
+
+        if (assigned_to) {
+          try {
+            await bot.api.sendMessage(
+              Number(assigned_to),
+              `🎯 An admin has assigned you a new task: <b>${title}</b>\n\nYou will earn <b>+${task.point_value} points</b> upon completion.`,
+              { parse_mode: "HTML" }
+            );
+          } catch (e) {
+            console.error("Failed to send task assignment DM:", e);
+          }
+        }
+
+        return res.status(200).json({ success: true, task });
       }
 
       if (action === "BROADCAST") {

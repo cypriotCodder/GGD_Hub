@@ -201,6 +201,21 @@ export async function getCommitteeMembers(
   return (data as any[]) || [];
 }
 
+/** Get all leaders of a committee */
+export async function getCommitteeLeaders(
+  committeeId: string
+): Promise<(UserCommittee & { users: User })[]> {
+  const { data, error } = await supabase
+    .from("user_committees")
+    .select("*, users(*)")
+    .eq("committee_id", committeeId)
+    .eq("role", "leader");
+
+  if (error)
+    throw new Error(`Failed to get committee leaders: ${error.message}`);
+  return (data as any[]) || [];
+}
+
 /** Add a user to a committee */
 export async function joinCommittee(
   telegramId: number,
@@ -436,6 +451,18 @@ export async function saveStandup(input: StandupInsert): Promise<Standup> {
 
   if (error) throw new Error(`Failed to save standup: ${error.message}`);
   return data as Standup;
+}
+
+/** Get all standups for the dashboard history */
+export async function getAllStandups(limit = 100): Promise<any[]> {
+  const { data, error } = await supabase
+    .from("standups")
+    .select("*, users(first_name, username), committees(name)")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(`Failed to get standups: ${error.message}`);
+  return data;
 }
 
 // ============================================================
