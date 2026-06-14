@@ -1,19 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg: var(--tg-theme-bg-color, #ffffff);
-  --surface: var(--tg-theme-secondary-bg-color, #f5f5f7);
-  --text: var(--tg-theme-text-color, #1c1c1e);
-  --text-secondary: var(--tg-theme-hint-color, #8e8e93);
-  --accent: var(--tg-theme-button-color, #007aff);
-  --accent-text: var(--tg-theme-button-text-color, #ffffff);
-  --border: rgba(0, 0, 0, 0.06);
-  --gold: #ffd60a;
-  --silver: #c0c0c0;
-  --bronze: #cd7f32;
-  --radius: 14px;
-  --radius-sm: 10px;
-  --transition: 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  /* Minimalist Nordic Theme */
+  --bg: #faf9f6;
+  --surface: #ffffff;
+  --text: #3d3b3c;
+  --text-secondary: #8c8985;
+  --accent: #869f93;
+  --accent-text: #ffffff;
+  --border: #eae6df;
+  --gold: #dfc27d;
+  --silver: #b5b5b5;
+  --bronze: #c59b76;
+  --radius: 16px;
+  --radius-sm: 12px;
+  --transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --shadow: 0 4px 20px rgba(44, 42, 41, 0.05);
 }
 
 * {
@@ -118,8 +120,10 @@ body {
   background: var(--surface);
   border-radius: var(--radius);
   padding: 14px 16px;
-  margin-bottom: 8px;
-  transition: transform var(--transition);
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: transform var(--transition), box-shadow var(--transition);
 }
 
 .card:active {
@@ -253,6 +257,7 @@ button, .btn {
   font-size: 14px;
   font-weight: 600;
   width: 100%;
+  box-shadow: 0 4px 12px rgba(134, 159, 147, 0.25);
 }
 
 .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
