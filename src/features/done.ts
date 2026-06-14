@@ -14,6 +14,7 @@ import {
   completeTask,
   addPoints,
   getCommittee,
+  getCommitteeLeaders,
 } from "../services/db";
 import { taskSelectKeyboard } from "../keyboards";
 
@@ -136,6 +137,22 @@ async function handleTaskCompletion(
     }
   } catch {
     // Group chat may be unavailable — don't block the user flow
+  }
+
+  // Notify leaders
+  try {
+    const leaders = await getCommitteeLeaders(task.committee_id);
+    for (const leader of leaders) {
+      if (leader.user_id !== userId) {
+        await ctx.api.sendMessage(
+          leader.user_id,
+          `✅ <b>Task Completed</b>\n\n@${escapeHtml(username)} just finished "<b>${escapeHtml(task.title)}</b>" and earned ${task.point_value} points!`,
+          { parse_mode: "HTML" }
+        );
+      }
+    }
+  } catch (err) {
+    console.error("Failed to notify leaders:", err);
   }
 }
 

@@ -133,6 +133,25 @@ export async function standupConversation(
           error
         );
       }
+
+      // Notify leaders via DM
+      try {
+        const leaders = await db.getCommitteeLeaders(committee.id);
+        for (const leader of leaders) {
+          if (leader.user_id !== userId) {
+            await ctx.api.sendMessage(
+              leader.user_id,
+              `📝 <b>New Standup from @${escapeHtml(displayName)}</b>\n\n` +
+              `✅ <b>Completed:</b>\n${escapeHtml(completed)}\n\n` +
+              `⏭️ <b>Next:</b>\n${escapeHtml(next)}\n\n` +
+              `🚧 <b>Blockers:</b>\n${escapeHtml(blockers)}`,
+              { parse_mode: "HTML" }
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Failed to notify leaders of standup:", error);
+      }
     });
   }
 }
