@@ -23,6 +23,8 @@ import {
   completeTask,
   saveStandup,
   getUser,
+  getUserCompletedTasks,
+  getUserStandups,
   supabase,
 } from "../src/services/db";
 
@@ -77,9 +79,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ]);
         return res.status(200).json({ role, committees, users, leaderboard, tasks, standups, settings });
       } else {
-        const [availableTasks, activeTasks, userDb, leaderboard] = await Promise.all([
+        const [availableTasks, activeTasks, completedTasks, myStandups, userDb, leaderboard] = await Promise.all([
           getAvailableTasksForUser(tgUser.id),
           getUserActiveTasks(tgUser.id),
+          getUserCompletedTasks(tgUser.id),
+          getUserStandups(tgUser.id),
           getUser(tgUser.id),
           getLeaderboard(undefined, 25),
         ]);
@@ -87,6 +91,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           role, 
           availableTasks, 
           activeTasks, 
+          completedTasks,
+          myStandups,
           user: userDb,
           leaderboard,
           settings 

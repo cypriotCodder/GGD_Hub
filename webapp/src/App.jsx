@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Users, LayoutList, Trophy, Plus, ShieldAlert, Pencil, Trash2, X, Settings, CheckCircle, AlertTriangle, Megaphone, Send, CheckSquare, MessageSquare, Link } from 'lucide-react';
+import { Users, LayoutList, Trophy, Plus, ShieldAlert, Pencil, Trash2, X, Settings, CheckCircle, AlertTriangle, Megaphone, Send, CheckSquare, MessageSquare, Link, ChevronRight, BarChart2 } from 'lucide-react';
 import MemberPortal from './MemberPortal';
+import Profile from './Profile';
+import Analytics from './Analytics';
 import './index.css';
 
 class ErrorBoundary extends React.Component {
@@ -32,7 +34,7 @@ function Dashboard() {
   const [data, setData] = useState({ committees: [], users: [], leaderboard: [], tasks: [], standups: [], settings: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [tab, setTab] = useState('committees');
+  const [tab, setTab] = useState('analytics');
 
   // Create Committee form
   const [showCreate, setShowCreate] = useState(false);
@@ -64,6 +66,9 @@ function Dashboard() {
   const [broadcastTarget, setBroadcastTarget] = useState('');
   const [broadcastResult, setBroadcastResult] = useState(null);
   const [broadcasting, setBroadcasting] = useState(false);
+
+  // Profile Modal
+  const [selectedProfileUser, setSelectedProfileUser] = useState(null);
 
   useEffect(() => {
     try {
@@ -264,6 +269,7 @@ function Dashboard() {
   const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   const tabs = [
+    { key: 'analytics', label: 'Analytics', icon: <BarChart2 size={15} /> },
     { key: 'committees', label: 'Committees', icon: <LayoutList size={15} /> },
     { key: 'users', label: 'Members', icon: <Users size={15} /> },
     { key: 'tasks', label: 'Tasks', icon: <CheckSquare size={15} /> },
@@ -299,6 +305,11 @@ function Dashboard() {
 
       {/* Content */}
       <div className="content">
+
+        {/* ======== ANALYTICS ======== */}
+        {tab === 'analytics' && (
+          <Analytics data={data} />
+        )}
 
         {/* ======== COMMITTEES ======== */}
         {tab === 'committees' && (
@@ -454,7 +465,11 @@ function Dashboard() {
 
             {data.users.map(u => (
               <div key={u.telegram_id} className="card">
-                <div className="card-row">
+                <div 
+                  className="card-row" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setSelectedProfileUser(u)}
+                >
                   <div className="avatar">{getInitial(u.first_name)}</div>
                   <div className="card-info">
                     <div className="card-name">
@@ -462,6 +477,9 @@ function Dashboard() {
                       {u.username && <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: 6 }}>@{u.username}</span>}
                     </div>
                     <div className="card-meta">ID: {u.telegram_id} · {u.points} pts</div>
+                  </div>
+                  <div>
+                    <ChevronRight size={16} color="var(--text-secondary)" />
                   </div>
                 </div>
 
@@ -722,8 +740,49 @@ function Dashboard() {
           </div>
         )}
 
-
       </div>
+
+      {/* Profile Modal */}
+      {selectedProfileUser && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', flexDirection: 'column',
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div style={{
+            background: '#fff', 
+            marginTop: 'auto',
+            borderTopLeftRadius: 20, 
+            borderTopRightRadius: 20,
+            maxHeight: '90vh',
+            display: 'flex', flexDirection: 'column',
+            animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}>
+            <div style={{ padding: '16px 16px 0', display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn-icon" onClick={() => setSelectedProfileUser(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div style={{ padding: '0 16px 24px', overflowY: 'auto' }}>
+              <Profile 
+                user={selectedProfileUser} 
+                completedTasks={data.tasks?.filter(t => t.assigned_to === selectedProfileUser.telegram_id && t.status === 'completed') || []} 
+                standups={data.standups?.filter(s => s.user_id === selectedProfileUser.telegram_id) || []} 
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global CSS for animations */}
+      <style>{`
+        @keyframes slideUp {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+      `}</style>
+
     </div>
   );
 }

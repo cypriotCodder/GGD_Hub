@@ -356,13 +356,27 @@ export async function getTask(taskId: string): Promise<Task | null> {
 export async function getUserActiveTasks(telegramId: number): Promise<Task[]> {
   const { data, error } = await supabase
     .from("tasks")
-    .select("*")
+    .select("*, committees(name)")
     .eq("assigned_to", telegramId)
     .eq("status", "in_progress")
     .order("created_at", { ascending: false });
 
   if (error)
     throw new Error(`Failed to get user active tasks: ${error.message}`);
+  return (data as Task[]) || [];
+}
+
+/** Get all completed tasks assigned to a user */
+export async function getUserCompletedTasks(telegramId: number): Promise<Task[]> {
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*, committees(name)")
+    .eq("assigned_to", telegramId)
+    .eq("status", "completed")
+    .order("created_at", { ascending: false });
+
+  if (error)
+    throw new Error(`Failed to get user completed tasks: ${error.message}`);
   return (data as Task[]) || [];
 }
 
@@ -474,6 +488,18 @@ export async function saveStandup(input: StandupInsert): Promise<Standup> {
 
   if (error) throw new Error(`Failed to save standup: ${error.message}`);
   return data as Standup;
+}
+
+/** Get all standups for a specific user */
+export async function getUserStandups(telegramId: number): Promise<Standup[]> {
+  const { data, error } = await supabase
+    .from("standups")
+    .select("*, committees(name)")
+    .eq("user_id", telegramId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(`Failed to get user standups: ${error.message}`);
+  return (data as Standup[]) || [];
 }
 
 /** Get all standups for the dashboard history */

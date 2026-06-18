@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { CheckSquare, MessageSquare, Plus, Trophy, CheckCircle } from 'lucide-react';
+import { CheckSquare, MessageSquare, Plus, Trophy, CheckCircle, User as UserIcon } from 'lucide-react';
+import Profile from './Profile';
 
 export default function MemberPortal({ data, apiPost, fetchData, showAlert }) {
   const [tab, setTab] = useState('active');
@@ -54,6 +55,7 @@ export default function MemberPortal({ data, apiPost, fetchData, showAlert }) {
     { key: 'active', label: 'My Tasks', icon: <CheckSquare size={15} /> },
     { key: 'available', label: 'Available', icon: <Plus size={15} /> },
     { key: 'standup', label: 'Standup', icon: <MessageSquare size={15} /> },
+    { key: 'profile', label: 'Profile', icon: <UserIcon size={15} /> },
   ];
 
   return (
@@ -210,6 +212,11 @@ export default function MemberPortal({ data, apiPost, fetchData, showAlert }) {
               </button>
             </div>
           </div>
+        )}
+
+        {/* ======== PROFILE ======== */}
+        {tab === 'profile' && (
+          <Profile user={data.user} completedTasks={data.completedTasks} standups={data.myStandups} />
         )}
       </div>
     </div>
