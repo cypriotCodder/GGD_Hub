@@ -3,7 +3,7 @@
  *
  * Leaders create tasks via /needhelp <title>.
  * Tasks are broadcast to the committee group chat with a "Claim" button.
- * Members tap the button to claim, earning points on completion.
+ * Members tap the button to claim, earning puan on completion.
  */
 
 import { Composer } from "grammy";
@@ -20,7 +20,7 @@ import {
 } from "../services/db";
 import {
   taskClaimKeyboard,
-  leaderCommitteeKeyboard,
+  liderCommitteeKeyboard,
 } from "../keyboards";
 
 const composer = new Composer<MyContext>();
@@ -34,10 +34,10 @@ composer.command("needhelp", async (ctx) => {
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    // Authorization: must be a leader or admin
+    // Authorization: must be a lider or yönetici
     const authorized = isAdmin(userId) || (await isAnyLeader(userId));
     if (!authorized) {
-      await ctx.reply("⛔ Only committee leaders and admins can post tasks.");
+      await ctx.reply("⛔ Only committee liders and yöneticis can post tasks.");
       return;
     }
 
@@ -50,19 +50,19 @@ composer.command("needhelp", async (ctx) => {
       return;
     }
 
-    // Get committees where this user is a leader
-    const leaderCommittees = await getLeaderCommittees(userId);
+    // Get committees where this user is a lider
+    const liderCommittees = await getLeaderCommittees(userId);
 
-    if (leaderCommittees.length === 0) {
+    if (liderCommittees.length === 0) {
       await ctx.reply(
-        "⚠️ You are not a leader of any committee. Ask an admin to promote you first."
+        "⚠️ You are not a lider of any committee. Ask an yönetici to promote you first."
       );
       return;
     }
 
-    if (leaderCommittees.length === 1) {
+    if (liderCommittees.length === 1) {
       // Single committee — create and post directly
-      const committee = leaderCommittees[0].committees;
+      const committee = liderCommittees[0].committees;
       await createAndBroadcastTask(ctx, title, committee.id, committee.chat_id, userId);
     } else {
       // Multiple committees — ask the user to run the command in the
@@ -72,7 +72,7 @@ composer.command("needhelp", async (ctx) => {
       //
       // Simplest correct approach: ask the user to send the command inside
       // the committee group chat so we can resolve it from chat_id.
-      const names = leaderCommittees
+      const names = liderCommittees
         .map((lc) => `• ${lc.committees.name}`)
         .join("\n");
 
@@ -111,13 +111,13 @@ composer.callbackQuery(/^claim_task:(.+)$/, async (ctx) => {
     // Edit the original broadcast message to show it's claimed
     try {
       await ctx.editMessageText(
-        `✅ <b>Task Claimed!</b>\n` +
+        `✅ <b>Görev Alındı!</b>\n` +
           `📌 ${escapeHtml(claimed.title)}\n` +
           `👤 Claimed by @${escapeHtml(username)}`,
         { parse_mode: "HTML" }
       );
     } catch {
-      // Message may have been deleted or is too old to edit
+      // Mesaj may have been deleted or is too old to edit
     }
 
     await ctx.answerCallbackQuery({ text: "✅ Task claimed! Good luck!" });
@@ -127,7 +127,7 @@ composer.callbackQuery(/^claim_task:(.+)$/, async (ctx) => {
       await ctx.api.sendMessage(
         userId,
         `🎯 You claimed "<b>${escapeHtml(claimed.title)}</b>"!\n\n` +
-          `Use /done when you've finished it to earn <b>+${claimed.point_value} points</b>.`,
+          `Use /done when you've finished it to earn <b>+${claimed.point_value} puan</b>.`,
         { parse_mode: "HTML" }
       );
     } catch {
@@ -147,7 +147,7 @@ composer.callbackQuery(/^claim_task:(.+)$/, async (ctx) => {
 // ──────────────────────────────────────────────
 
 /**
- * Create a task in the DB, broadcast it to the committee group chat,
+ * Oluştur a task in the DB, broadcast it to the committee group chat,
  * and save the resulting message_id back to the task record.
  */
 async function createAndBroadcastTask(
@@ -174,7 +174,7 @@ async function createAndBroadcastTask(
     `🆘 <b>Help Needed!</b>\n` +
       `📌 ${escapeHtml(title)}\n` +
       `👤 Posted by @${escapeHtml(username)}\n` +
-      `🏆 +${task.point_value} points`,
+      `🏆 +${task.point_value} puan`,
     {
       parse_mode: "HTML",
       reply_markup: taskClaimKeyboard(task.id),

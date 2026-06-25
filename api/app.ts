@@ -27,6 +27,7 @@ import {
   getUserStandups,
   supabase,
 } from "../src/services/db";
+import { taskClaimKeyboard } from "../src/keyboards";
 
 const bot = new Bot(config.BOT_TOKEN);
 
@@ -53,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const tgUser = JSON.parse(decodeURIComponent(userStr));
     const isUserAdmin = isAdmin(tgUser.id);
-    const role = isUserAdmin ? "admin" : "member";
+    const role = isUserAdmin ? "yönetici" : "üye";
 
     // Initialize bot info once
     const botInfo = await bot.api.getMe();
@@ -70,16 +71,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
 
       if (isUserAdmin) {
-        const [committees, users, leaderboard, tasks, standups] = await Promise.all([
+        const [committees, users, liderboard, tasks, standups] = await Promise.all([
           getCommittees(),
           getAllUsersWithMemberships(),
           getLeaderboard(undefined, 25),
           getAllTasks(),
           getAllStandups(50),
         ]);
-        return res.status(200).json({ role, committees, users, leaderboard, tasks, standups, settings });
+        return res.status(200).json({ role, committees, users, liderboard, tasks, standups, settings });
       } else {
-        const [availableTasks, activeTasks, completedTasks, myStandups, userDb, leaderboard] = await Promise.all([
+        const [availableTasks, activeTasks, completedTasks, myStandups, userDb, liderboard] = await Promise.all([
           getAvailableTasksForUser(tgUser.id),
           getUserActiveTasks(tgUser.id),
           getUserCompletedTasks(tgUser.id),
@@ -94,7 +95,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           completedTasks,
           myStandups,
           user: userDb,
-          leaderboard,
+          liderboard,
           settings 
         });
       }
@@ -117,15 +118,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (action === "COMPLETE_TASK") {
         const task = await completeTask(payload.taskId);
-        if (!task) return res.status(400).json({ error: "Task could not be completed" });
+        if (!task) return res.status(400).json({ error: "Görev tamamlanamadı" });
         return res.status(200).json({ success: true, task });
       }
 
       if (action === "SUBMIT_STANDUP") {
         const { completed, next, blockers } = payload;
         
-        // Save standup for all committees the user is a member of
-        const memberships = await getCommitteeMembers("dummy").catch(() => []); // this is wrong, let's use a query
+        // Save standup for all committees the user is a üye of
+        const üyeships = await getCommitteeMembers("dummy").catch(() => []); // this is wrong, let's use a query
         const { data: userCommittees } = await supabase
           .from("user_committees")
           .select("committee_id")
@@ -149,7 +150,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Admin Actions
       // ==========================================
       if (!isUserAdmin) {
-        return res.status(403).json({ error: "Forbidden: Not an admin" });
+        return res.status(403).json({ error: "Forbidden: Not an yönetici" });
       }
 
       if (action === "CREATE_COMMITTEE") {
@@ -164,7 +165,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         await joinCommittee(
           Number(payload.telegram_id),
           payload.committee_id,
-          payload.role || "member"
+          payload.role || "üye"
         );
         return res.status(200).json({ success: true });
       }
@@ -188,12 +189,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (action === "CREATE_TASK") {
-        const { title, description, points, committee_id, assigned_to } = payload;
+        const { title, description, puan, committee_id, assigned_to } = payload;
         
         const task = await createTask({
           title,
           description: description || null,
-          point_value: Number(points) || 5,
+          point_value: Number(puan) || 5,
           committee_id,
           created_by: tgUser.id,
           assigned_to: assigned_to ? Number(assigned_to) : null,
@@ -204,11 +205,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           try {
             await bot.api.sendMessage(
               Number(assigned_to),
-              `🎯 An admin has assigned you a new task: <b>${title}</b>\n\nYou will earn <b>+${task.point_value} points</b> upon completion.`,
+              `🎯 An yönetici has assigned you a new task: <b>${title}</b>\n\nKazanacağınız puan: <b>+${task.point_value} puan</b> tamamlandığında.`,
               { parse_mode: "HTML" }
             );
           } catch (e) {
             console.error("Failed to send task assignment DM:", e);
+          }
+        } else {
+          // It's an available task. Broadcast to all üyes of the committee.
+          try {
+            const üyes = await getCommitteeMembers(committee_id);
+            for (const üye of üyes) {
+              await bot.api.sendMessage(
+                üye.user_id,
+                `📢 <b>Yeni Görev Eklendi!</b>\n\n<b>${title}</b>\n${description || ''}\n\nKazan <b>+${task.point_value} puan</b> tamamlayarak.`,
+                { 
+                  parse_mode: "HTML",
+                  reply_markup: taskClaimKeyboard(task.id)
+                }
+              ).catch(() => {});
+            }
+          } catch (e) {
+            console.error("Failed to broadcast new task:", e);
           }
         }
 
@@ -218,13 +236,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (action === "BROADCAST") {
         const { message, committeeId } = payload;
         if (!message || !message.trim()) {
-          return res.status(400).json({ error: "Message is required" });
+          return res.status(400).json({ error: "Mesaj is required" });
         }
 
         let recipients: { telegram_id: number }[] = [];
         if (committeeId) {
-          const members = await getCommitteeMembers(committeeId);
-          recipients = members.map((m: any) => ({ telegram_id: m.user_id }));
+          const üyes = await getCommitteeMembers(committeeId);
+          recipients = üyes.map((m: any) => ({ telegram_id: m.user_id }));
         } else {
           recipients = await getAllUsers();
         }

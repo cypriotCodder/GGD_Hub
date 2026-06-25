@@ -31,39 +31,39 @@ class ErrorBoundary extends React.Component {
 }
 
 function Dashboard() {
-  const [data, setData] = useState({ committees: [], users: [], leaderboard: [], tasks: [], standups: [], settings: null });
+  const [data, setData] = useState({ committees: [], users: [], liderboard: [], tasks: [], standups: [], settings: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState('analytics');
 
-  // Create Committee form
-  const [showCreate, setShowCreate] = useState(false);
+  // Komite Oluştur form
+  const [showOluştur, setShowOluştur] = useState(false);
   const [newName, setNewName] = useState('');
   const [newChat, setNewChat] = useState('');
 
-  // Edit Committee
+  // Komiteyi Düzenle
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState('');
   const [editChat, setEditChat] = useState('');
 
-  // Add Member form
-  const [showAddMember, setShowAddMember] = useState(false);
-  const [addMemberUser, setAddMemberUser] = useState('');
-  const [addMemberCommittee, setAddMemberCommittee] = useState('');
-  const [addMemberRole, setAddMemberRole] = useState('member');
+  // Üye Ekle form
+  const [showEkleMember, setShowEkleMember] = useState(false);
+  const [addMemberUser, setEkleMemberUser] = useState('');
+  const [addMemberCommittee, setEkleMemberCommittee] = useState('');
+  const [addMemberRol, setEkleMemberRol] = useState('üye');
 
-  // Create Task form
-  const [showCreateTask, setShowCreateTask] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
+  // Oluştur Task form
+  const [showOluşturTask, setShowOluşturTask] = useState(false);
+  const [newTaskBaşlık, setNewTaskBaşlık] = useState('');
   const [newTaskDesc, setNewTaskDesc] = useState('');
-  const [newTaskPoints, setNewTaskPoints] = useState(5);
+  const [newTaskPuan, setNewTaskPuan] = useState(5);
   const [newTaskCommittee, setNewTaskCommittee] = useState('');
   const [newTaskAssignee, setNewTaskAssignee] = useState('');
 
   // Broadcast
   const [showBroadcast, setShowBroadcast] = useState(false);
   const [broadcastMsg, setBroadcastMsg] = useState('');
-  const [broadcastTarget, setBroadcastTarget] = useState('');
+  const [broadcastHedef, setBroadcastHedef] = useState('');
   const [broadcastResult, setBroadcastResult] = useState(null);
   const [broadcasting, setBroadcasting] = useState(false);
 
@@ -136,10 +136,10 @@ function Dashboard() {
     });
   };
 
-  const handleCreate = async () => {
+  const handleOluştur = async () => {
     try {
       await apiPost('CREATE_COMMITTEE', { name: newName, chat_id: newChat });
-      setShowCreate(false); setNewName(''); setNewChat('');
+      setShowOluştur(false); setNewName(''); setNewChat('');
       fetchData();
     } catch (err) { showAlert(err.message); }
   };
@@ -159,7 +159,7 @@ function Dashboard() {
   };
 
   const handleDelete = async (c) => {
-    const confirmed = window.confirm(`Delete "${c.name}"? This will also remove all memberships. This cannot be undone.`);
+    const confirmed = window.confirm(`Delete "${c.name}"? This will also remove all üyeships. This cannot be undone.`);
     if (!confirmed) return;
     try {
       await apiPost('DELETE_COMMITTEE', { id: c.id });
@@ -176,37 +176,37 @@ function Dashboard() {
     } catch (err) { showAlert(err.message); }
   };
 
-  const handleCreateTask = async () => {
+  const handleOluşturTask = async () => {
     try {
       await apiPost('CREATE_TASK', { 
-        title: newTaskTitle, 
+        title: newTaskBaşlık, 
         description: newTaskDesc, 
-        points: newTaskPoints, 
+        puan: newTaskPuan, 
         committee_id: newTaskCommittee, 
         assigned_to: newTaskAssignee 
       });
-      setShowCreateTask(false);
-      setNewTaskTitle('');
+      setShowOluşturTask(false);
+      setNewTaskBaşlık('');
       setNewTaskDesc('');
-      setNewTaskPoints(5);
+      setNewTaskPuan(5);
       setNewTaskCommittee('');
       setNewTaskAssignee('');
       fetchData();
     } catch (err) { showAlert(err.message); }
   };
 
-  const handleAddMember = async () => {
+  const handleEkleMember = async () => {
     try {
-      await apiPost('ADD_MEMBER', { telegram_id: addMemberUser, committee_id: addMemberCommittee, role: addMemberRole });
-      setShowAddMember(false); setAddMemberUser(''); setAddMemberCommittee(''); setAddMemberRole('member');
+      await apiPost('ADD_MEMBER', { telegram_id: addMemberUser, committee_id: addMemberCommittee, role: addMemberRol });
+      setShowEkleMember(false); setEkleMemberUser(''); setEkleMemberCommittee(''); setEkleMemberRol('üye');
       fetchData();
     } catch (err) { showAlert(err.message); }
   };
 
   const handleBroadcast = async () => {
-    const targetName = broadcastTarget
-      ? data.committees.find(c => c.id === broadcastTarget)?.name || 'committee'
-      : 'all members';
+    const targetName = broadcastHedef
+      ? data.committees.find(c => c.id === broadcastHedef)?.name || 'committee'
+      : 'all üyes';
     const confirmed = window.confirm(`Send this message to ${targetName}?`);
     if (!confirmed) return;
     try {
@@ -214,7 +214,7 @@ function Dashboard() {
       setBroadcastResult(null);
       const result = await apiPost('BROADCAST', {
         message: broadcastMsg,
-        committeeId: broadcastTarget || undefined,
+        committeeId: broadcastHedef || undefined,
       });
       setBroadcastResult({ sent: result.sent, failed: result.failed });
       setBroadcastMsg('');
@@ -233,11 +233,11 @@ function Dashboard() {
     } catch (err) { showAlert(err.message); }
   };
 
-  const handleChangeRole = async (telegramId, committeeId, currentRole, committeeName) => {
-    const newRole = currentRole === 'leader' ? 'member' : 'leader';
-    if (!window.confirm(`Change role in ${committeeName} to ${newRole}?`)) return;
+  const handleChangeRol = async (telegramId, committeeId, currentRol, committeeName) => {
+    const newRol = currentRol === 'lider' ? 'üye' : 'lider';
+    if (!window.confirm(`Change role in ${committeeName} to ${newRol}?`)) return;
     try {
-      await apiPost('CHANGE_ROLE', { telegram_id: telegramId, committee_id: committeeId, role: newRole });
+      await apiPost('CHANGE_ROLE', { telegram_id: telegramId, committee_id: committeeId, role: newRol });
       fetchData();
     } catch (err) { showAlert(err.message); }
   };
@@ -269,16 +269,16 @@ function Dashboard() {
   const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   const tabs = [
-    { key: 'analytics', label: 'Analytics', icon: <BarChart2 size={15} /> },
-    { key: 'committees', label: 'Committees', icon: <LayoutList size={15} /> },
-    { key: 'users', label: 'Members', icon: <Users size={15} /> },
-    { key: 'tasks', label: 'Tasks', icon: <CheckSquare size={15} /> },
-    { key: 'standups', label: 'Standups', icon: <MessageSquare size={15} /> },
-    { key: 'leaderboard', label: 'Leaderboard', icon: <Trophy size={15} /> },
-    { key: 'settings', label: 'Settings', icon: <Settings size={15} /> },
+    { key: 'analytics', label: 'Analiz', icon: <BarChart2 size={15} /> },
+    { key: 'committees', label: 'Komiteler', icon: <LayoutList size={15} /> },
+    { key: 'users', label: 'Üyeler', icon: <Users size={15} /> },
+    { key: 'görev', label: 'Görevler', icon: <CheckSquare size={15} /> },
+    { key: 'standups', label: 'Standup\'lar', icon: <MessageSquare size={15} /> },
+    { key: 'liderboard', label: 'Liderlik Tablosu', icon: <Trophy size={15} /> },
+    { key: 'settings', label: 'Ayarlar', icon: <Settings size={15} /> },
   ];
 
-  if (data.role === 'member') {
+  if (data.role === 'üye') {
     return <MemberPortal data={data} apiPost={apiPost} fetchData={fetchData} showAlert={showAlert} />;
   }
 
@@ -319,18 +319,18 @@ function Dashboard() {
                 <div className="section-title">Committees</div>
                 <div className="section-count">{data.committees.length} total</div>
               </div>
-              <button className="btn-icon" onClick={() => setShowCreate(!showCreate)}>
-                {showCreate ? <X size={16} /> : <Plus size={16} />}
-                {showCreate ? 'Close' : 'New'}
+              <button className="btn-icon" onClick={() => setShowOluştur(!showOluştur)}>
+                {showOluştur ? <X size={16} /> : <Plus size={16} />}
+                {showOluştur ? 'Kapat' : 'New'}
               </button>
             </div>
 
-            {showCreate && (
+            {showOluştur && (
               <div className="form-panel fade-in">
-                <h3>Create Committee</h3>
+                <h3>Komite Oluştur</h3>
                 <input className="input" placeholder="Committee name" value={newName} onChange={e => setNewName(e.target.value)} />
-                <input className="input" placeholder="Telegram Chat ID" type="number" value={newChat} onChange={e => setNewChat(e.target.value)} />
-                <button className="btn-primary" onClick={handleCreate} disabled={!newName || !newChat}>Create</button>
+                <input className="input" placeholder="Telegram Sohbet ID" type="number" value={newChat} onChange={e => setNewChat(e.target.value)} />
+                <button className="btn-primary" onClick={handleOluştur} disabled={!newName || !newChat}>Oluştur</button>
               </div>
             )}
 
@@ -339,17 +339,17 @@ function Dashboard() {
                 {editingId === c.id ? (
                   <div className="edit-form fade-in">
                     <input className="input" placeholder="Name" value={editName} onChange={e => setEditName(e.target.value)} />
-                    <input className="input" placeholder="Chat ID" type="number" value={editChat} onChange={e => setEditChat(e.target.value)} />
+                    <input className="input" placeholder="Sohbet ID" type="number" value={editChat} onChange={e => setEditChat(e.target.value)} />
                     <div className="edit-actions">
                       <button className="btn-primary" onClick={handleEdit} style={{ flex: 1 }}>Save</button>
-                      <button className="btn-ghost" onClick={() => setEditingId(null)}>Cancel</button>
+                      <button className="btn-ghost" onClick={() => setEditingId(null)}>İptal</button>
                     </div>
                   </div>
                 ) : (
                   <div className="card-row">
                     <div className="card-info">
                       <div className="card-name">{c.name}</div>
-                      <div className="card-meta">Chat ID: {c.chat_id}</div>
+                      <div className="card-meta">Sohbet ID: {c.chat_id}</div>
                     </div>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button className="btn-icon" onClick={() => copyInviteLink(c.id)} title="Copy Invite Link">
@@ -384,17 +384,17 @@ function Dashboard() {
                 <div className="section-title">Members</div>
                 <div className="section-count">{data.users.length} registered</div>
               </div>
-              <button className="btn-icon" onClick={() => setShowAddMember(!showAddMember)}>
-                {showAddMember ? <X size={16} /> : <Plus size={16} />}
-                {showAddMember ? 'Close' : 'Add Member'}
+              <button className="btn-icon" onClick={() => setShowEkleMember(!showEkleMember)}>
+                {showEkleMember ? <X size={16} /> : <Plus size={16} />}
+                {showEkleMember ? 'Kapat' : 'Üye Ekle'}
               </button>
             </div>
 
-            {showAddMember && (
+            {showEkleMember && (
               <div className="form-panel fade-in">
-                <h3>Add to Committee</h3>
-                <select className="input" value={addMemberUser} onChange={e => setAddMemberUser(e.target.value)}>
-                  <option value="">Select member…</option>
+                <h3>Ekle to Committee</h3>
+                <select className="input" value={addMemberUser} onChange={e => setEkleMemberUser(e.target.value)}>
+                  <option value="">Select üye…</option>
                   {data.users.map(u => (
                     <option key={u.telegram_id} value={u.telegram_id}>
                       {u.first_name} {u.username ? `(@${u.username})` : ''}
@@ -402,19 +402,19 @@ function Dashboard() {
                   ))}
                 </select>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <select className="input" style={{ flex: 1 }} value={addMemberCommittee} onChange={e => setAddMemberCommittee(e.target.value)}>
+                  <select className="input" style={{ flex: 1 }} value={addMemberCommittee} onChange={e => setEkleMemberCommittee(e.target.value)}>
                     <option value="">Select committee…</option>
                     {data.committees.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
-                  <select className="input" style={{ width: 110 }} value={addMemberRole} onChange={e => setAddMemberRole(e.target.value)}>
-                    <option value="member">Member</option>
-                    <option value="leader">Leader</option>
+                  <select className="input" style={{ width: 110 }} value={addMemberRol} onChange={e => setEkleMemberRol(e.target.value)}>
+                    <option value="üye">Member</option>
+                    <option value="lider">Leader</option>
                   </select>
                 </div>
-                <button className="btn-primary" onClick={handleAddMember} disabled={!addMemberUser || !addMemberCommittee}>
-                  Add Member
+                <button className="btn-primary" onClick={handleEkleMember} disabled={!addMemberUser || !addMemberCommittee}>
+                  Üye Ekle
                 </button>
               </div>
             )}
@@ -423,15 +423,15 @@ function Dashboard() {
             <div style={{ marginTop: 8, marginBottom: 16 }}>
               <button className="btn-icon" onClick={() => { setShowBroadcast(!showBroadcast); setBroadcastResult(null); }} style={{ width: '100%' }}>
                 {showBroadcast ? <X size={16} /> : <Megaphone size={16} />}
-                {showBroadcast ? 'Close' : 'Broadcast Message'}
+                {showBroadcast ? 'Kapat' : 'Toplu Mesaj Gönder'}
               </button>
             </div>
 
             {showBroadcast && (
               <div className="form-panel fade-in">
                 <h3>📢 Send Announcement</h3>
-                <select className="input" value={broadcastTarget} onChange={e => setBroadcastTarget(e.target.value)}>
-                  <option value="">All members</option>
+                <select className="input" value={broadcastHedef} onChange={e => setBroadcastHedef(e.target.value)}>
+                  <option value="">All üyes</option>
                   {data.committees.map(c => (
                     <option key={c.id} value={c.id}>{c.name} only</option>
                   ))}
@@ -476,26 +476,26 @@ function Dashboard() {
                       {u.first_name}
                       {u.username && <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: 6 }}>@{u.username}</span>}
                     </div>
-                    <div className="card-meta">ID: {u.telegram_id} · {u.points} pts</div>
+                    <div className="card-meta">ID: {u.telegram_id} · {u.puan} pts</div>
                   </div>
                   <div>
                     <ChevronRight size={16} color="var(--text-secondary)" />
                   </div>
                 </div>
 
-                {u.memberships && u.memberships.length > 0 && (
-                  <div className="memberships-list">
-                    {u.memberships.map(m => (
-                      <div key={m.committee_id} className={`membership-badge ${m.role === 'leader' ? 'leader' : ''}`}>
+                {u.üyeships && u.üyeships.length > 0 && (
+                  <div className="üyeships-list">
+                    {u.üyeships.map(m => (
+                      <div key={m.committee_id} className={`üyeship-badge ${m.role === 'lider' ? 'lider' : ''}`}>
                         <span 
-                          className="membership-role-toggle"
-                          onClick={() => handleChangeRole(u.telegram_id, m.committee_id, m.role, m.name)}
+                          className="üyeship-role-toggle"
+                          onClick={() => handleChangeRol(u.telegram_id, m.committee_id, m.role, m.name)}
                           title="Click to toggle role"
                         >
                           {m.name} • <span style={{textTransform: 'capitalize'}}>{m.role}</span>
                         </span>
                         <button 
-                          className="membership-remove"
+                          className="üyeship-remove"
                           onClick={() => handleRemoveMember(u.telegram_id, m.committee_id, m.name)}
                           title="Remove from committee"
                         >
@@ -511,14 +511,14 @@ function Dashboard() {
             {data.users.length === 0 && (
               <div className="empty">
                 <div className="empty-icon">👥</div>
-                No members yet
+                No üyes yet
               </div>
             )}
           </div>
         )}
 
         {/* ======== LEADERBOARD ======== */}
-        {tab === 'leaderboard' && (
+        {tab === 'liderboard' && (
           <div className="fade-in">
             <div className="section-header">
               <div>
@@ -528,7 +528,7 @@ function Dashboard() {
             </div>
 
             <ol className="lb-list">
-              {(data.leaderboard || []).map((entry, i) => (
+              {(data.liderboard || []).map((entry, i) => (
                 <li key={entry.telegram_id} className="lb-item">
                   <div className={`lb-rank ${getRankClass(i)}`}>{i + 1}</div>
                   <div className="lb-info">
@@ -536,14 +536,14 @@ function Dashboard() {
                     {entry.username && <div className="lb-handle">@{entry.username}</div>}
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div className="lb-points">{entry.points}</div>
+                    <div className="lb-puan">{entry.puan}</div>
                     <div className="lb-pts-label">pts</div>
                   </div>
                 </li>
               ))}
             </ol>
 
-            {(!data.leaderboard || data.leaderboard.length === 0) && (
+            {(!data.liderboard || data.liderboard.length === 0) && (
               <div className="empty">
                 <div className="empty-icon">🏆</div>
                 No scores yet
@@ -553,23 +553,23 @@ function Dashboard() {
         )}
 
         {/* ======== TASKS ======== */}
-        {tab === 'tasks' && (
+        {tab === 'görev' && (
           <div className="fade-in">
             <div className="section-header">
               <div>
                 <div className="section-title">Tasks</div>
                 <div className="section-count">{(data.tasks || []).length} total tasks</div>
               </div>
-              <button className="btn-icon" onClick={() => setShowCreateTask(!showCreateTask)}>
-                {showCreateTask ? <X size={16} /> : <Plus size={16} />}
-                {showCreateTask ? 'Close' : 'Create Task'}
+              <button className="btn-icon" onClick={() => setShowOluşturTask(!showOluşturTask)}>
+                {showOluşturTask ? <X size={16} /> : <Plus size={16} />}
+                {showOluşturTask ? 'Kapat' : 'Oluştur Task'}
               </button>
             </div>
 
-            {showCreateTask && (
+            {showOluşturTask && (
               <div className="form-panel fade-in">
                 <h3>Post a New Task</h3>
-                <input className="input" placeholder="Task Title" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} />
+                <input className="input" placeholder="Task Başlık" value={newTaskBaşlık} onChange={e => setNewTaskBaşlık(e.target.value)} />
                 <input className="input" placeholder="Description (Optional)" value={newTaskDesc} onChange={e => setNewTaskDesc(e.target.value)} />
                 <div style={{ display: 'flex', gap: 8 }}>
                   <select className="input" style={{ flex: 1 }} value={newTaskCommittee} onChange={e => setNewTaskCommittee(e.target.value)}>
@@ -578,10 +578,10 @@ function Dashboard() {
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
-                  <input className="input" style={{ width: 90 }} type="number" placeholder="Points" value={newTaskPoints} onChange={e => setNewTaskPoints(Number(e.target.value))} />
+                  <input className="input" style={{ width: 90 }} type="number" placeholder="Puan" value={newTaskPuan} onChange={e => setNewTaskPuan(Number(e.target.value))} />
                 </div>
                 <select className="input" value={newTaskAssignee} onChange={e => setNewTaskAssignee(e.target.value)}>
-                  <option value="">Assign to member… (Optional)</option>
+                  <option value="">Assign to üye… (Optional)</option>
                   {data.users.map(u => (
                     <option key={u.telegram_id} value={u.telegram_id}>
                       {u.first_name} {u.username ? `(@${u.username})` : ''}
@@ -591,7 +591,7 @@ function Dashboard() {
                 <div className="settings-hint" style={{ marginBottom: 12, marginTop: -4 }}>
                   If assigned, the user will receive a direct message notification.
                 </div>
-                <button className="btn-primary" onClick={handleCreateTask} disabled={!newTaskTitle || !newTaskCommittee}>
+                <button className="btn-primary" onClick={handleOluşturTask} disabled={!newTaskBaşlık || !newTaskCommittee}>
                   Post Task
                 </button>
               </div>
@@ -604,12 +604,12 @@ function Dashboard() {
                     <div className="card-name" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                       {t.title}
                       <span className={`task-badge task-status-${t.status}`}>
-                        {t.status === 'in_progress' ? 'In Progress' : t.status === 'completed' ? 'Completed' : 'Pending'}
+                        {t.status === 'in_progress' ? 'Devam Ediyor' : t.status === 'completed' ? 'Tamamlandı' : 'Bekliyor'}
                       </span>
                     </div>
                     {t.description && <div className="card-meta" style={{ marginTop: 4, marginBottom: 8, whiteSpace: 'normal', overflow: 'visible' }}>{t.description}</div>}
                     <div className="card-meta" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 600, color: 'var(--accent)' }}>🎯 {t.points} pts</span>
+                      <span style={{ fontWeight: 600, color: 'var(--accent)' }}>🎯 {t.puan} pts</span>
                       {t.committees?.name && <span>🏢 {t.committees.name}</span>}
                       {t.created_user?.first_name && <span>✏️ By {t.created_user.first_name}</span>}
                       {t.assigned_user?.first_name && <span>👤 For {t.assigned_user.first_name}</span>}
@@ -654,7 +654,7 @@ function Dashboard() {
                 </div>
                 
                 <div className="standup-section">
-                  <div className="standup-label">✅ Completed:</div>
+                  <div className="standup-label">✅ Tamamlandı:</div>
                   <div className="standup-text">{s.completed || 'N/A'}</div>
                 </div>
                 

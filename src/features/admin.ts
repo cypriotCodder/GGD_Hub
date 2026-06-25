@@ -1,10 +1,10 @@
 /**
  * Admin commands — gated by isAdmin() check.
  *
- * /admin_add_points    — award points to any user
- * /admin_add_committee — create a new committee
- * /admin_promote       — make a user a committee leader
- * /admin_broadcast     — send a message to every registered user
+ * /yönetici_add_puan    — award puan to any user
+ * /yönetici_add_committee — create a new committee
+ * /yönetici_promote       — make a user a committee lider
+ * /yönetici_broadcast     — send a message to every registered user
  */
 
 import { Composer, InlineKeyboard } from "grammy";
@@ -22,10 +22,10 @@ import {
 const composer = new Composer<MyContext>();
 
 // ──────────────────────────────────────────────
-// Shared admin guard
+// Shared yönetici guard
 // ──────────────────────────────────────────────
 
-/** Reply with an unauthorized message and return true if the user is NOT admin */
+/** Reply with an unauthorized message and return true if the user is NOT yönetici */
 function denyIfNotAdmin(ctx: MyContext): boolean {
   const userId = ctx.from?.id;
   if (!userId || !isAdmin(userId)) {
@@ -35,23 +35,23 @@ function denyIfNotAdmin(ctx: MyContext): boolean {
 }
 
 // ──────────────────────────────────────────────
-// /admin (Interactive Menu)
+// /yönetici (Interactive Menu)
 // ──────────────────────────────────────────────
 
-composer.command("admin", async (ctx) => {
+composer.command("yönetici", async (ctx) => {
   if (denyIfNotAdmin(ctx)) {
-    await ctx.reply("⛔ This command is restricted to admins.");
+    await ctx.reply("⛔ This command is restricted to yöneticis.");
     return;
   }
 
   const keyboard = new InlineKeyboard()
-    .text("➕ Add Committee", "admin_menu_add_committee").row()
-    .text("⭐ Promote Leader", "admin_menu_promote_leader");
+    .text("➕ Ekle Committee", "yönetici_menu_add_committee").row()
+    .text("⭐ Promote Leader", "yönetici_menu_promote_lider");
 
   if (ctx.chat?.type === "private") {
     keyboard.row().webApp("🖥️ Open Dashboard", "https://ggd-hub.vercel.app/");
   } else {
-    keyboard.row().text("🖥️ Open Dashboard (DM the bot!)", "admin_menu_no_op");
+    keyboard.row().text("🖥️ Open Dashboard (DM the bot!)", "yönetici_menu_no_op");
   }
 
   await ctx.reply("🛠 <b>Admin Menu</b>\n\nWhat would you like to do?", {
@@ -60,32 +60,32 @@ composer.command("admin", async (ctx) => {
   });
 });
 
-composer.callbackQuery("admin_menu_add_committee", async (ctx) => {
+composer.callbackQuery("yönetici_menu_add_committee", async (ctx) => {
   if (denyIfNotAdmin(ctx)) return;
   await ctx.answerCallbackQuery();
   await ctx.conversation.enter("addCommittee");
 });
 
-composer.callbackQuery("admin_menu_promote_leader", async (ctx) => {
+composer.callbackQuery("yönetici_menu_promote_lider", async (ctx) => {
   if (denyIfNotAdmin(ctx)) return;
   await ctx.answerCallbackQuery();
   await ctx.conversation.enter("promoteLeader");
 });
 
 // ──────────────────────────────────────────────
-// /admin_add_points <telegram_id> <amount>
+// /yönetici_add_puan <telegram_id> <amount>
 // ──────────────────────────────────────────────
 
-composer.command("admin_add_points", async (ctx) => {
+composer.command("yönetici_add_puan", async (ctx) => {
   if (denyIfNotAdmin(ctx)) {
-    await ctx.reply("⛔ This command is restricted to admins.");
+    await ctx.reply("⛔ This command is restricted to yöneticis.");
     return;
   }
 
   try {
     const args = ctx.match?.toString().trim().split(/\s+/);
     if (!args || args.length < 2) {
-      await ctx.reply("📝 Usage: /admin_add_points <telegram_id> <amount>");
+      await ctx.reply("📝 Usage: /yönetici_add_puan <telegram_id> <amount>");
       return;
     }
 
@@ -106,29 +106,29 @@ composer.command("admin_add_points", async (ctx) => {
     await addPoints(telegramId, amount);
 
     await ctx.reply(
-      `✅ Added <b>${amount}</b> points to ${user.username ? "@" + escapeHtml(user.username) : escapeHtml(user.first_name ?? String(telegramId))}`,
+      `✅ Ekleed <b>${amount}</b> puan to ${user.username ? "@" + escapeHtml(user.username) : escapeHtml(user.first_name ?? String(telegramId))}`,
       { parse_mode: "HTML" }
     );
   } catch (err) {
-    console.error("Error in /admin_add_points:", err);
-    await ctx.reply("❌ Failed to add points. Check the logs.");
+    console.error("Error in /yönetici_add_puan:", err);
+    await ctx.reply("❌ Failed to add puan. Check the logs.");
   }
 });
 
 // ──────────────────────────────────────────────
-// /admin_add_committee <name> <chat_id>
+// /yönetici_add_committee <name> <chat_id>
 // ──────────────────────────────────────────────
 
-composer.command("admin_add_committee", async (ctx) => {
+composer.command("yönetici_add_committee", async (ctx) => {
   if (denyIfNotAdmin(ctx)) {
-    await ctx.reply("⛔ This command is restricted to admins.");
+    await ctx.reply("⛔ This command is restricted to yöneticis.");
     return;
   }
 
   try {
     const args = ctx.match?.toString().trim().split(/\s+/);
     if (!args || args.length < 2) {
-      await ctx.reply("📝 Usage: /admin_add_committee <name> <chat_id>");
+      await ctx.reply("📝 Usage: /yönetici_add_committee <name> <chat_id>");
       return;
     }
 
@@ -154,25 +154,25 @@ composer.command("admin_add_committee", async (ctx) => {
       { parse_mode: "HTML" }
     );
   } catch (err) {
-    console.error("Error in /admin_add_committee:", err);
+    console.error("Error in /yönetici_add_committee:", err);
     await ctx.reply("❌ Failed to create committee. Check the logs.");
   }
 });
 
 // ──────────────────────────────────────────────
-// /admin_promote <telegram_id> <committee_id>
+// /yönetici_promote <telegram_id> <committee_id>
 // ──────────────────────────────────────────────
 
-composer.command("admin_promote", async (ctx) => {
+composer.command("yönetici_promote", async (ctx) => {
   if (denyIfNotAdmin(ctx)) {
-    await ctx.reply("⛔ This command is restricted to admins.");
+    await ctx.reply("⛔ This command is restricted to yöneticis.");
     return;
   }
 
   try {
     const args = ctx.match?.toString().trim().split(/\s+/);
     if (!args || args.length < 2) {
-      await ctx.reply("📝 Usage: /admin_promote <telegram_id> <committee_id>");
+      await ctx.reply("📝 Usage: /yönetici_promote <telegram_id> <committee_id>");
       return;
     }
 
@@ -196,33 +196,33 @@ composer.command("admin_promote", async (ctx) => {
       return;
     }
 
-    await joinCommittee(telegramId, committeeId, "leader");
+    await joinCommittee(telegramId, committeeId, "lider");
 
     await ctx.reply(
       `✅ ${user.username ? "@" + escapeHtml(user.username) : escapeHtml(user.first_name ?? String(telegramId))} ` +
-        `is now a <b>leader</b> of "${escapeHtml(committee.name)}"!`,
+        `is now a <b>lider</b> of "${escapeHtml(committee.name)}"!`,
       { parse_mode: "HTML" }
     );
   } catch (err) {
-    console.error("Error in /admin_promote:", err);
+    console.error("Error in /yönetici_promote:", err);
     await ctx.reply("❌ Failed to promote user. Check the logs.");
   }
 });
 
 // ──────────────────────────────────────────────
-// /admin_broadcast <message>
+// /yönetici_broadcast <message>
 // ──────────────────────────────────────────────
 
-composer.command("admin_broadcast", async (ctx) => {
+composer.command("yönetici_broadcast", async (ctx) => {
   if (denyIfNotAdmin(ctx)) {
-    await ctx.reply("⛔ This command is restricted to admins.");
+    await ctx.reply("⛔ This command is restricted to yöneticis.");
     return;
   }
 
   try {
     const message = ctx.match?.toString().trim();
     if (!message) {
-      await ctx.reply("📝 Usage: /admin_broadcast <message>");
+      await ctx.reply("📝 Usage: /yönetici_broadcast <message>");
       return;
     }
 
@@ -252,7 +252,7 @@ composer.command("admin_broadcast", async (ctx) => {
       `📡 Broadcast complete!\n✅ Sent: ${sent}\n❌ Failed: ${failed}`
     );
   } catch (err) {
-    console.error("Error in /admin_broadcast:", err);
+    console.error("Error in /yönetici_broadcast:", err);
     await ctx.reply("❌ Broadcast failed. Check the logs.");
   }
 });
@@ -269,5 +269,5 @@ function escapeHtml(text: string): string {
     .replace(/>/g, "&gt;");
 }
 
-/** Default export — the admin Composer */
+/** Default export — the yönetici Composer */
 export default composer;

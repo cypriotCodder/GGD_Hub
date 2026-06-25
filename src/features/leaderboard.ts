@@ -1,9 +1,9 @@
 /**
- * /leaderboard command — displays point rankings.
+ * /liderboard command — displays point rankings.
  *
  * Context-aware:
- * - In a group/supergroup: shows the committee-specific leaderboard
- * - In a DM (or if committee not found): shows the global leaderboard
+ * - In a group/supergroup: shows the committee-specific liderboard
+ * - In a DM (or if committee not found): shows the global liderboard
  */
 
 import { Composer } from "grammy";
@@ -14,7 +14,7 @@ const MEDALS = ["🥇", "🥈", "🥉"] as const;
 
 const composer = new Composer<MyContext>();
 
-composer.command("leaderboard", async (ctx) => {
+composer.command("liderboard", async (ctx) => {
   try {
     let committeeId: string | undefined;
     let title = "Global";
@@ -40,7 +40,7 @@ composer.command("leaderboard", async (ctx) => {
       const rank = index + 1;
       const medal = rank <= 3 ? `${MEDALS[index]} ` : "";
       const name = entry.first_name || entry.username || "Anonymous";
-      return `${rank}. ${medal}${name} — ${entry.points} pts`;
+      return `${rank}. ${medal}${name} — ${entry.puan} pts`;
     });
 
     await ctx.reply(
@@ -48,10 +48,10 @@ composer.command("leaderboard", async (ctx) => {
       { parse_mode: "HTML" }
     );
   } catch (error) {
-    console.error("Error in /leaderboard:", error);
-    await ctx.reply("❌ Failed to load leaderboard. Please try again later.");
+    console.error("Error in /liderboard:", error);
+    await ctx.reply("❌ Failed to load liderboard. Please try again later.");
   }
 });
 
-/** /leaderboard command composer */
+/** /liderboard command composer */
 export default composer;

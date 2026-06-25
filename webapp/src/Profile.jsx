@@ -2,19 +2,19 @@ import React from 'react';
 import { Award, Star, CheckCircle, Flame, Shield, Activity, MessageSquare } from 'lucide-react';
 
 export function calculateGamification(user, completedTasks, standups) {
-  const points = user?.points || 0;
-  const level = Math.floor(points / 50) + 1;
-  const pointsInLevel = points % 50;
-  const progressPercent = (pointsInLevel / 50) * 100;
+  const puan = user?.puan || 0;
+  const level = Math.floor(puan / 50) + 1;
+  const puanInLevel = puan % 50;
+  const progressPercent = (puanInLevel / 50) * 100;
 
-  const levelTitles = {
-    1: 'Novice',
-    2: 'Apprentice',
-    3: 'Contributor',
-    4: 'Senior',
-    5: 'Expert',
+  const levelBaşlıks = {
+    1: 'Çaylak',
+    2: 'Çırak',
+    3: 'Katkıda Bulunan',
+    4: 'Kıdemli',
+    5: 'Uzman',
   };
-  const title = level >= 5 ? 'Elite' : levelTitles[level];
+  const title = level >= 5 ? 'Elit' : levelBaşlıks[level];
 
   // Calculate Badges
   const badges = [];
@@ -22,28 +22,28 @@ export function calculateGamification(user, completedTasks, standups) {
   const standupCount = standups?.length || 0;
 
   if (taskCount >= 1) {
-    badges.push({ id: 'first_task', name: 'First Task', icon: <Star size={16} color="#fbbf24" />, desc: 'Completed your first task' });
+    badges.push({ id: 'first_task', name: 'İlk Görev', icon: <Star size={16} color="#fbbf24" />, desc: 'Tamamlandı your first task' });
   }
   if (taskCount >= 10) {
-    badges.push({ id: 'task_master', name: 'Task Master', icon: <Award size={16} color="#60a5fa" />, desc: 'Completed 10 tasks' });
+    badges.push({ id: 'task_master', name: 'Görev Ustası', icon: <Award size={16} color="#60a5fa" />, desc: 'Tamamlandı 10 tasks' });
   }
   if (standupCount >= 1) {
-    badges.push({ id: 'communicator', name: 'Communicator', icon: <MessageSquare size={16} color="#34d399" />, desc: 'Submitted a standup' });
+    badges.push({ id: 'communicator', name: 'İletişimci', icon: <MessageSquare size={16} color="#34d399" />, desc: 'Gönderted a standup' });
   }
   if (standupCount >= 4) {
-    badges.push({ id: 'streak', name: 'Streak', icon: <Flame size={16} color="#f87171" />, desc: 'Submitted 4+ standups' });
+    badges.push({ id: 'streak', name: 'Seri', icon: <Flame size={16} color="#f87171" />, desc: 'Gönderted 4+ standups' });
   }
   if (level >= 5) {
-    badges.push({ id: 'elite', name: 'Elite', icon: <Shield size={16} color="#a78bfa" />, desc: 'Reached Level 5' });
+    badges.push({ id: 'elite', name: 'Elit', icon: <Shield size={16} color="#a78bfa" />, desc: 'Reached Level 5' });
   }
 
-  return { level, title, progressPercent, pointsInLevel, badges };
+  return { level, title, progressPercent, puanInLevel, badges };
 }
 
 export default function Profile({ user, completedTasks, standups }) {
   if (!user) return null;
 
-  const { level, title, progressPercent, pointsInLevel, badges } = calculateGamification(user, completedTasks, standups);
+  const { level, title, progressPercent, puanInLevel, badges } = calculateGamification(user, completedTasks, standups);
 
   const getInitial = (name) => (name || '?').charAt(0).toUpperCase();
 
@@ -61,8 +61,8 @@ export default function Profile({ user, completedTasks, standups }) {
         {/* Level Progress */}
         <div style={{ marginTop: 24, textAlign: 'left' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, fontWeight: 600 }}>
-            <span>{user.points} Total Points</span>
-            <span style={{ color: 'var(--text-secondary)' }}>{50 - pointsInLevel} to Lvl {level + 1}</span>
+            <span>{user.puan} Total Puan</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{50 - puanInLevel} to Lvl {level + 1}</span>
           </div>
           <div style={{ height: 8, background: '#e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
             <div style={{ height: '100%', background: 'var(--accent)', width: `${progressPercent}%`, transition: 'width 0.5s ease' }} />
@@ -104,7 +104,7 @@ export default function Profile({ user, completedTasks, standups }) {
               <span style={{ fontSize: 14, fontWeight: 500 }}>{t.title}</span>
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 22, marginTop: 4 }}>
-              Completed in {t.committees?.name || 'Global'} • +{t.point_value} pts
+              Tamamlandı in {t.committees?.name || 'Global'} • +{t.point_value} pts
             </div>
           </div>
         ))}
@@ -112,7 +112,7 @@ export default function Profile({ user, completedTasks, standups }) {
           <div key={s.id} style={{ padding: 12, borderBottom: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Activity size={14} color="#6366f1" />
-              <span style={{ fontSize: 14, fontWeight: 500 }}>Submitted Standup</span>
+              <span style={{ fontSize: 14, fontWeight: 500 }}>Gönderted Standup</span>
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 22, marginTop: 4 }}>
               {new Date(s.created_at).toLocaleDateString()}

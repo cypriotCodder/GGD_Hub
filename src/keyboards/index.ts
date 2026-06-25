@@ -23,25 +23,33 @@ export function committeeSelectionKeyboard(
     }
   });
 
-  keyboard.row().text("✅ I'm Done", "onboarding_done");
+  keyboard.row().text("✅ Bitirdim", "onboarding_done");
 
   return keyboard;
 }
 
 /**
- * "Claim Task" button for task broadcasting.
+ * "Görevi Al" button for task broadcasting.
  * Callback data: `claim_task:<task_id>`
  */
 export function taskClaimKeyboard(taskId: string): InlineKeyboard {
-  return new InlineKeyboard().text("🙋 Claim Task", `claim_task:${taskId}`);
+  return new InlineKeyboard().text("🙋 Görevi Al", `claim_task:${taskId}`);
 }
 
 /**
- * "Start Standup" button sent via cron DM.
+ * "Tamamlandı Olarak İşaretle" button for tasks claimed in chat.
+ * Callback data: `complete_task:<task_id>`
+ */
+export function completeTaskKeyboard(taskId: string): InlineKeyboard {
+  return new InlineKeyboard().text("✅ Tamamlandı Olarak İşaretle", `complete_task:${taskId}`);
+}
+
+/**
+ * "Standup'a Başla" button sent via cron DM.
  * Callback data: `start_standup`
  */
 export function standupStartKeyboard(): InlineKeyboard {
-  return new InlineKeyboard().text("📝 Start Standup", "start_standup");
+  return new InlineKeyboard().text("📝 Standup'a Başla", "start_standup");
 }
 
 /**
@@ -61,10 +69,10 @@ export function taskSelectKeyboard(
 }
 
 /**
- * Committee selection for leaders posting tasks.
+ * Committee selection for liders posting tasks.
  * Callback data: `post_task_to:<committee_id>`
  */
-export function leaderCommitteeKeyboard(
+export function liderCommitteeKeyboard(
   committees: { id: string; name: string }[]
 ): InlineKeyboard {
   const keyboard = new InlineKeyboard();
@@ -83,5 +91,5 @@ export function leaderCommitteeKeyboard(
  * Callback data: `standup_skip`
  */
 export function standupSkipKeyboard(): InlineKeyboard {
-  return new InlineKeyboard().text("No blockers ✨", "standup_skip");
+  return new InlineKeyboard().text("Engel yok ✨", "standup_skip");
 }

@@ -52,10 +52,10 @@ export default async function handler(
       try {
         await bot.api.sendMessage(
           user.telegram_id,
-          "🔔 <b>Standup Time!</b>\n\n" +
+          "🔔 <b>Standup Zamanı!</b>\n\n" +
             "It's time for your weekly update. " +
             "Tap the button below to share what you've been working on.\n\n" +
-            "<i>This only takes a minute!</i>",
+            "<i>Bu sadece bir dakikanızı alacak!</i>",
           {
             parse_mode: "HTML",
             reply_markup: standupStartKeyboard(),

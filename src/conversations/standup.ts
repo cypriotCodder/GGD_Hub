@@ -50,17 +50,17 @@ export async function standupConversation(
 
   if (userCommittees.length === 0) {
     await ctx.reply(
-      "⚠️ You're not part of any committee yet. Use /start to join one first!"
+      "⚠️ Henüz herhangi bir komitenin parçası değilsiniz. Birine katılmak için /start'ı kullanın!"
     );
     return;
   }
 
-  // --- Question 1: Completed ---
+  // --- Question 1: Tamamlandı ---
   await ctx.reply(
-    "📋 <b>Weekly Standup</b>\n\n" +
-      "Let's go through your update step by step.\n\n" +
-      "1️⃣ <b>What did you complete this week?</b>\n\n" +
-      "<i>Type your answer below:</i>",
+    "📋 <b>Haftalık Standup</b>\n\n" +
+      "Şimdi adım adım güncellemeni alalım.\n\n" +
+      "1️⃣ <b>Bu hafta neleri tamamladın?</b>\n\n" +
+      "<i>Cevabınızı aşağıya yazın:</i>",
     { parse_mode: "HTML" }
   );
 
@@ -68,8 +68,8 @@ export async function standupConversation(
 
   // --- Question 2: Next ---
   await ctx.reply(
-    "2️⃣ <b>What are you working on next?</b>\n\n" +
-      "<i>Type your answer below:</i>",
+    "2️⃣ <b>Sırada üzerinde çalışacağın ne var?</b>\n\n" +
+      "<i>Cevabınızı aşağıya yazın:</i>",
     { parse_mode: "HTML" }
   );
 
@@ -77,14 +77,14 @@ export async function standupConversation(
 
   // --- Question 3: Blockers ---
   await ctx.reply(
-    "3️⃣ <b>Any blockers or help needed?</b>\n\n" +
-      '<i>Type your answer, or send "none" if all clear:</i>',
+    "3️⃣ <b>Herhangi bir engel var mı veya yardıma ihtiyacın var mı?</b>\n\n" +
+      '<i>Cevabınızı yazın veya sorun yoksa "yok" yazın:</i>',
     { parse_mode: "HTML" }
   );
 
   const blockersRaw = await waitForText(conversation, ctx);
   const blockers =
-    blockersRaw.toLowerCase() === "none" ? "No blockers ✨" : blockersRaw;
+    blockersRaw.toLowerCase() === "none" ? "Engel yok ✨" : blockersRaw;
 
   // --- Summary & Save ---
   const displayName = ctx.from?.username
@@ -92,11 +92,11 @@ export async function standupConversation(
     : ctx.from?.first_name || "Unknown";
 
   const summaryForUser =
-    "✅ <b>Standup Complete!</b>\n\n" +
-    `<b>Completed:</b> ${escapeHtml(completed)}\n` +
-    `<b>Next:</b> ${escapeHtml(next)}\n` +
-    `<b>Blockers:</b> ${escapeHtml(blockers)}\n\n` +
-    "Your update has been posted to your committee chats. 🚀";
+    "✅ <b>Standup Tamamlandı!</b>\n\n" +
+    `<b>Tamamlandı:</b> ${escapeHtml(completed)}\n` +
+    `<b>Sırada:</b> ${escapeHtml(next)}\n` +
+    `<b>Engeller:</b> ${escapeHtml(blockers)}\n\n` +
+    "Güncellemeniz komite sohbetlerinde paylaşıldı. 🚀";
 
   await ctx.reply(summaryForUser, { parse_mode: "HTML" });
 
@@ -117,10 +117,10 @@ export async function standupConversation(
 
     // Post formatted summary to committee group chat
     const groupSummary =
-      `📋 <b>Weekly Standup — ${escapeHtml(displayName)}</b>\n\n` +
-      `✅ <b>Completed:</b>\n${escapeHtml(completed)}\n\n` +
-      `🔜 <b>Next:</b>\n${escapeHtml(next)}\n\n` +
-      `🚧 <b>Blockers:</b>\n${escapeHtml(blockers)}`;
+      `📋 <b>Haftalık Standup — ${escapeHtml(displayName)}</b>\n\n` +
+      `✅ <b>Tamamlandı:</b>\n${escapeHtml(completed)}\n\n` +
+      `🔜 <b>Sırada:</b>\n${escapeHtml(next)}\n\n` +
+      `🚧 <b>Engeller:</b>\n${escapeHtml(blockers)}`;
 
     await conversation.external(async () => {
       try {
@@ -134,23 +134,23 @@ export async function standupConversation(
         );
       }
 
-      // Notify leaders via DM
+      // Notify liders via DM
       try {
-        const leaders = await db.getCommitteeLeaders(committee.id);
-        for (const leader of leaders) {
-          if (leader.user_id !== userId) {
+        const liders = await db.getCommitteeLeaders(committee.id);
+        for (const lider of liders) {
+          if (lider.user_id !== userId) {
             await ctx.api.sendMessage(
-              leader.user_id,
+              lider.user_id,
               `📝 <b>New Standup from @${escapeHtml(displayName)}</b>\n\n` +
-              `✅ <b>Completed:</b>\n${escapeHtml(completed)}\n\n` +
-              `⏭️ <b>Next:</b>\n${escapeHtml(next)}\n\n` +
-              `🚧 <b>Blockers:</b>\n${escapeHtml(blockers)}`,
+              `✅ <b>Tamamlandı:</b>\n${escapeHtml(completed)}\n\n` +
+              `⏭️ <b>Sırada:</b>\n${escapeHtml(next)}\n\n` +
+              `🚧 <b>Engeller:</b>\n${escapeHtml(blockers)}`,
               { parse_mode: "HTML" }
             );
           }
         }
       } catch (error) {
-        console.error("Failed to notify leaders of standup:", error);
+        console.error("Failed to notify liders of standup:", error);
       }
     });
   }

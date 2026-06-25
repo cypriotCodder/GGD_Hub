@@ -16,7 +16,7 @@ composer.command("help", async (ctx) => {
         `/myid — Get your Telegram User ID\n` +
         `/needhelp — (Leaders) Broadcast a task\n` +
         `/done — Mark a claimed task complete\n` +
-        `/leaderboard — View top contributors`,
+        `/liderboard — View top contributors`,
       { parse_mode: "HTML" }
     );
   } catch (error) {

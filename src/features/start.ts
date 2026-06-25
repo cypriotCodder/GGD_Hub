@@ -51,16 +51,16 @@ composer.command("start", async (ctx) => {
     }
 
     // Check if user already belongs to any committees
-    const memberships = await getUserCommittees(from.id);
+    const üyeships = await getUserCommittees(from.id);
 
-    if (memberships.length > 0) {
-      const committeeList = memberships
+    if (üyeships.length > 0) {
+      const committeeList = üyeships
         .map((m) => `• ${m.committees.name}`)
         .join("\n");
 
       await ctx.reply(
         `👋 <b>Welcome back!</b>\n\n` +
-          `You're a member of:\n${committeeList}\n\n` +
+          `You're a üye of:\n${committeeList}\n\n` +
           `Use /help to see available commands.`,
         { parse_mode: "HTML" }
       );
@@ -72,7 +72,7 @@ composer.command("start", async (ctx) => {
 
     if (committees.length === 0) {
       await ctx.reply(
-        "👋 Welcome! No committees have been created yet. Ask an admin to set one up."
+        "👋 Welcome! No committees have been created yet. Ask an yönetici to set one up."
       );
       return;
     }
@@ -107,9 +107,9 @@ composer.callbackQuery(/^select_committee:(.+)$/, async (ctx) => {
       text: `✅ Joined ${committee?.name ?? "committee"}!`,
     });
 
-    // Refresh: show updated membership list + keyboard for more selections
-    const memberships = await getUserCommittees(from.id);
-    const committeeList = memberships
+    // Refresh: show updated üyeship list + keyboard for more selections
+    const üyeships = await getUserCommittees(from.id);
+    const committeeList = üyeships
       .map((m) => `• ${m.committees.name}`)
       .join("\n");
 
@@ -118,7 +118,7 @@ composer.callbackQuery(/^select_committee:(.+)$/, async (ctx) => {
     await ctx.editMessageText(
       `👋 <b>Welcome to GGD Hub!</b>\n\n` +
         `Your committees:\n${committeeList}\n\n` +
-        `Select more or tap <b>I'm Done</b>:`,
+        `Select more or tap <b>Bitirdim</b>:`,
       {
         parse_mode: "HTML",
         reply_markup: committeeSelectionKeyboard(allCommittees),
@@ -144,9 +144,9 @@ composer.callbackQuery("onboarding_done", async (ctx) => {
       `🎉 <b>You're all set!</b>\n\n` +
         `Here's what you can do:\n` +
         `/help — See all commands\n` +
-        `/leaderboard — View top contributors\n` +
+        `/liderboard — View top contributors\n` +
         `/done — Mark a claimed task as complete\n\n` +
-        `Your committee leaders will broadcast tasks — stay tuned!`,
+        `Your committee liders will broadcast tasks — stay tuned!`,
       { parse_mode: "HTML" }
     );
   } catch (error) {

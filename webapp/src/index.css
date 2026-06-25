@@ -12,8 +12,8 @@
   --gold: #dfc27d;
   --silver: #b5b5b5;
   --bronze: #c59b76;
-  --radius: 16px;
-  --radius-sm: 12px;
+  --radius: 6px;
+  --radius-sm: 4px;
   --transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --shadow: 0 4px 20px rgba(44, 42, 41, 0.05);
 }
@@ -262,6 +262,62 @@ button, .btn {
 
 .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
 .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+@media (max-width: 600px) {
+  .modal {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+}
+
+/* ---- Bottom Tab Bar (Member Portal) ---- */
+.bottom-tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  z-index: 1000;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.bottom-tab-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  padding: 4px 0;
+}
+
+.bottom-tab-btn.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.bottom-tab-btn:active {
+  opacity: 0.7;
+}
+
+/* Add padding to body when bottom bar is active to prevent content cutoff */
+.has-bottom-bar {
+  padding-bottom: 80px;
+}
 
 .btn-small {
   padding: 6px 14px;

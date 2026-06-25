@@ -9,20 +9,20 @@ export async function addCommitteeConversation(
   
   const nameCtx = await conversation.wait();
   if (nameCtx.message?.text === "/cancel") {
-    await nameCtx.reply("Cancelled.");
+    await nameCtx.reply("İptalled.");
     return;
   }
   const name = nameCtx.message?.text?.trim();
   if (!name) {
-    await nameCtx.reply("Invalid name. Cancelled.");
+    await nameCtx.reply("Invalid name. İptalled.");
     return;
   }
 
-  await nameCtx.reply(`Great! Now, what is the Telegram Chat ID for "${name}"?\n(Usually a negative number like -100123456789)`);
+  await nameCtx.reply(`Great! Now, what is the Telegram Sohbet ID for "${name}"?\n(Usually a negative number like -100123456789)`);
   
   const chatCtx = await conversation.wait();
   if (chatCtx.message?.text === "/cancel") {
-    await chatCtx.reply("Cancelled.");
+    await chatCtx.reply("İptalled.");
     return;
   }
   
@@ -30,7 +30,7 @@ export async function addCommitteeConversation(
   const chatId = Number(chatIdStr);
   
   if (!chatId || isNaN(chatId)) {
-    await chatCtx.reply("Invalid chat ID. Must be a number. Cancelled.");
+    await chatCtx.reply("Invalid chat ID. Must be a number. İptalled.");
     return;
   }
   

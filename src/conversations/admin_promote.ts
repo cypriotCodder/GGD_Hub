@@ -10,7 +10,7 @@ export async function promoteLeaderConversation(
   
   const userCtx = await conversation.wait();
   if (userCtx.message?.text === "/cancel") {
-    await userCtx.reply("Cancelled.");
+    await userCtx.reply("İptalled.");
     return;
   }
   
@@ -24,7 +24,7 @@ export async function promoteLeaderConversation(
   }
 
   if (!telegramId || isNaN(telegramId)) {
-    await userCtx.reply("Could not determine Telegram ID. Make sure the forwarded message is from a user without privacy restrictions, or just paste their numeric ID. Cancelled.");
+    await userCtx.reply("Could not determine Telegram ID. Make sure the forwarded message is from a user without privacy restrictions, or just paste their numeric ID. İptalled.");
     return;
   }
   
@@ -53,9 +53,9 @@ export async function promoteLeaderConversation(
   const committeeId = cbCtx.callbackQuery.data.replace("promote_", "");
   
   try {
-    await conversation.external(() => joinCommittee(telegramId!, committeeId, "leader"));
+    await conversation.external(() => joinCommittee(telegramId!, committeeId, "lider"));
     const selectedCommittee = committees.find(c => c.id === committeeId);
-    await cbCtx.editMessageText(`✅ <b>${user.first_name}</b> is now a leader of <b>${selectedCommittee?.name}</b>!`, { parse_mode: "HTML" });
+    await cbCtx.editMessageText(`✅ <b>${user.first_name}</b> is now a lider of <b>${selectedCommittee?.name}</b>!`, { parse_mode: "HTML" });
   } catch (err: any) {
     await cbCtx.editMessageText(`❌ Failed to promote: ${err.message}`);
   }

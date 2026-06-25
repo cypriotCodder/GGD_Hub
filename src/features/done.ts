@@ -2,7 +2,7 @@
  * Task completion feature.
  *
  * Members mark their active tasks as done via /done.
- * Points are awarded and a completion announcement is posted
+ * Puan are awarded and a completion announcement is posted
  * to the committee group chat.
  */
 
@@ -33,7 +33,7 @@ composer.command("done", async (ctx) => {
 
     if (activeTasks.length === 0) {
       await ctx.reply(
-        "📭 You have no active tasks. Claim one first with the 🙋 Claim Task button!"
+        "📭 You have no active tasks. Claim one first with the 🙋 Görevi Al button!"
       );
       return;
     }
@@ -43,7 +43,7 @@ composer.command("done", async (ctx) => {
       await handleTaskCompletion(ctx, activeTasks[0], userId);
     } else {
       // Multiple active tasks — let the user pick
-      await ctx.reply("Which task did you complete?", {
+      await ctx.reply("Hangi görevi tamamladınız?", {
         reply_markup: taskSelectKeyboard(activeTasks),
       });
     }
@@ -80,7 +80,7 @@ composer.callbackQuery(/^done_task:(.+)$/, async (ctx) => {
     try {
       await ctx.editMessageText("✅ Task completed! See below for details.");
     } catch {
-      // Message may have been deleted
+      // Mesaj may have been deleted
     }
 
     await ctx.answerCallbackQuery({ text: "🎉 Task completed!" });
@@ -98,7 +98,7 @@ composer.callbackQuery(/^done_task:(.+)$/, async (ctx) => {
 // ──────────────────────────────────────────────
 
 /**
- * Complete a task: update status, award points, notify user and committee.
+ * Complete a task: update status, award puan, notify user and committee.
  */
 async function handleTaskCompletion(
   ctx: MyContext,
@@ -112,7 +112,7 @@ async function handleTaskCompletion(
     return;
   }
 
-  // Award points
+  // Award puan
   await addPoints(userId, task.point_value);
 
   const username = ctx.from?.username ?? ctx.from?.first_name ?? "Someone";
@@ -121,7 +121,7 @@ async function handleTaskCompletion(
   await ctx.reply(
     `🎉 <b>Task completed!</b>\n` +
       `📌 ${escapeHtml(task.title)}\n` +
-      `🏆 <b>+${task.point_value} points</b> earned!`,
+      `🏆 <b>+${task.point_value} puan</b> earned!`,
     { parse_mode: "HTML" }
   );
 
@@ -139,20 +139,20 @@ async function handleTaskCompletion(
     // Group chat may be unavailable — don't block the user flow
   }
 
-  // Notify leaders
+  // Notify liders
   try {
-    const leaders = await getCommitteeLeaders(task.committee_id);
-    for (const leader of leaders) {
-      if (leader.user_id !== userId) {
+    const liders = await getCommitteeLeaders(task.committee_id);
+    for (const lider of liders) {
+      if (lider.user_id !== userId) {
         await ctx.api.sendMessage(
-          leader.user_id,
-          `✅ <b>Task Completed</b>\n\n@${escapeHtml(username)} just finished "<b>${escapeHtml(task.title)}</b>" and earned ${task.point_value} points!`,
+          lider.user_id,
+          `✅ <b>Task Tamamlandı</b>\n\n@${escapeHtml(username)} just finished "<b>${escapeHtml(task.title)}</b>" and earned ${task.point_value} puan!`,
           { parse_mode: "HTML" }
         );
       }
     }
   } catch (err) {
-    console.error("Failed to notify leaders:", err);
+    console.error("Failed to notify liders:", err);
   }
 }
 

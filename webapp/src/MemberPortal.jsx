@@ -5,14 +5,28 @@ import Profile from './Profile';
 export default function MemberPortal({ data, apiPost, fetchData, showAlert }) {
   const [tab, setTab] = useState('active');
 
-  const [standupCompleted, setStandupCompleted] = useState('');
+  const [standupTamamlandı, setStandupTamamlandı] = useState('');
   const [standupNext, setStandupNext] = useState('');
   const [standupBlockers, setStandupBlockers] = useState('');
-  const [submittingStandup, setSubmittingStandup] = useState(false);
+  const [submittingStandup, setGöndertingStandup] = useState(false);
+
+  const triggerHaptic = (type = 'light') => {
+    try {
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        if (type === 'success') {
+          window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+        } else {
+          window.Telegram.WebApp.HapticFeedback.impactOccurred(type);
+        }
+      }
+    } catch (e) {}
+  };
 
   const handleClaim = async (taskId) => {
+    triggerHaptic('light');
     try {
       await apiPost('CLAIM_TASK', { taskId });
+      triggerHaptic('success');
       fetchData();
     } catch (err) {
       showAlert(err.message);
@@ -20,29 +34,33 @@ export default function MemberPortal({ data, apiPost, fetchData, showAlert }) {
   };
 
   const handleComplete = async (taskId) => {
+    triggerHaptic('light');
     try {
       await apiPost('COMPLETE_TASK', { taskId });
+      triggerHaptic('success');
       fetchData();
     } catch (err) {
       showAlert(err.message);
     }
   };
 
-  const handleStandupSubmit = async () => {
-    if (!standupCompleted.trim() && !standupNext.trim() && !standupBlockers.trim()) {
+  const handleStandupGönder = async () => {
+    triggerHaptic('light');
+    if (!standupTamamlandı.trim() && !standupNext.trim() && !standupBlockers.trim()) {
       showAlert('Please fill in at least one field.');
       return;
     }
     setSubmittingStandup(true);
     try {
       await apiPost('SUBMIT_STANDUP', {
-        completed: standupCompleted,
+        completed: standupTamamlandı,
         next: standupNext,
         blockers: standupBlockers,
       });
-      setStandupCompleted('');
+      setStandupTamamlandı('');
       setStandupNext('');
       setStandupBlockers('');
+      triggerHaptic('success');
       showAlert('Standup submitted successfully!');
     } catch (err) {
       showAlert(err.message);
@@ -52,41 +70,30 @@ export default function MemberPortal({ data, apiPost, fetchData, showAlert }) {
   };
 
   const tabs = [
-    { key: 'active', label: 'My Tasks', icon: <CheckSquare size={15} /> },
-    { key: 'available', label: 'Available', icon: <Plus size={15} /> },
+    { key: 'active', label: 'Görevlerim', icon: <CheckSquare size={15} /> },
+    { key: 'available', label: 'Açık Görevler', icon: <Plus size={15} /> },
     { key: 'standup', label: 'Standup', icon: <MessageSquare size={15} /> },
-    { key: 'profile', label: 'Profile', icon: <UserIcon size={15} /> },
+    { key: 'profile', label: 'Profil', icon: <UserIcon size={15} /> },
   ];
 
   return (
-    <div className="fade-in">
+    <div className="fade-in has-bottom-bar">
       <div className="header">
-        <h1>Member Portal</h1>
-        <p>Welcome, {data.user?.first_name || 'Volunteer'}</p>
+        <h1>Üye Portalı</h1>
+        <p>Hoş Geldin, {data.user?.first_name || 'Gönüllü'}</p>
         <div style={{ marginTop: 8, fontSize: '13px', color: 'var(--text-secondary)' }}>
           <Trophy size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: 4 }} />
-          {data.user?.points || 0} Points
+          {data.user?.puan || 0} Puan
         </div>
       </div>
 
-      <div className="tab-bar">
-        {tabs.map(t => (
-          <button
-            key={t.key}
-            className={`tab-btn ${tab === t.key ? 'active' : ''}`}
-            onClick={() => setTab(t.key)}
-          >
-            {t.icon} {t.label}
-          </button>
-        ))}
-      </div>
 
       <div className="content">
         {/* ======== MY TASKS ======== */}
         {tab === 'active' && (
           <div className="fade-in">
             <div className="section-header">
-              <div className="section-title">My Tasks</div>
+              <div className="section-title">Görevlerim</div>
             </div>
 
             {data.activeTasks?.map(t => (
@@ -102,7 +109,7 @@ export default function MemberPortal({ data, apiPost, fetchData, showAlert }) {
                   </div>
                   <div>
                     {t.status === 'completed' ? (
-                      <span style={{ color: '#10b981', fontSize: '12px', fontWeight: 600 }}>Completed</span>
+                      <span style={{ color: '#10b981', fontSize: '12px', fontWeight: 600 }}>Tamamlandı</span>
                     ) : (
                       <button className="btn-primary" onClick={() => handleComplete(t.id)}>
                         <CheckCircle size={14} style={{ marginRight: 4 }} /> Done
@@ -116,17 +123,17 @@ export default function MemberPortal({ data, apiPost, fetchData, showAlert }) {
             {(!data.activeTasks || data.activeTasks.length === 0) && (
               <div className="empty">
                 <div className="empty-icon">✅</div>
-                You have no active tasks.
+                Aktif göreviniz bulunmuyor.
               </div>
             )}
           </div>
         )}
 
-        {/* ======== AVAILABLE TASKS ======== */}
+        {/* ======== AVAILABLE ======== */}
         {tab === 'available' && (
           <div className="fade-in">
             <div className="section-header">
-              <div className="section-title">Available to Claim</div>
+              <div className="section-title">Açık Görevler</div>
             </div>
 
             {data.availableTasks?.map(t => (
@@ -142,7 +149,7 @@ export default function MemberPortal({ data, apiPost, fetchData, showAlert }) {
                   </div>
                   <div>
                     <button className="btn-small" onClick={() => handleClaim(t.id)}>
-                      Claim
+                      Al
                     </button>
                   </div>
                 </div>
@@ -152,7 +159,7 @@ export default function MemberPortal({ data, apiPost, fetchData, showAlert }) {
             {(!data.availableTasks || data.availableTasks.length === 0) && (
               <div className="empty">
                 <div className="empty-icon">🎉</div>
-                No pending tasks right now.
+                Şu an açık görev bulunmuyor.
               </div>
             )}
           </div>
@@ -162,41 +169,38 @@ export default function MemberPortal({ data, apiPost, fetchData, showAlert }) {
         {tab === 'standup' && (
           <div className="fade-in">
             <div className="section-header">
-              <div className="section-title">Submit Standup</div>
+              <div className="section-title">Standup Raporu</div>
             </div>
-            <div className="form-panel">
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 16 }}>
-                Submit your weekly progress report. This will be recorded for your committee leaders.
-              </p>
-              
+            
+            <div className="card">
               <div className="form-group">
-                <label>What did you complete this week?</label>
+                <label>Bu hafta neleri tamamladın?</label>
                 <textarea 
                   className="input textarea" 
                   rows={3} 
-                  placeholder="E.g., Finished the UI design..."
-                  value={standupCompleted}
-                  onChange={e => setStandupCompleted(e.target.value)}
+                  placeholder="Örn., Veritabanı kurulumu yapıldı..."
+                  value={standupTamamlandı}
+                  onChange={e => setStandupTamamlandı(e.target.value)}
                 />
               </div>
 
               <div className="form-group" style={{ marginTop: 12 }}>
-                <label>What are your next steps?</label>
+                <label>Sırada ne var?</label>
                 <textarea 
                   className="input textarea" 
                   rows={3} 
-                  placeholder="E.g., Starting the backend integration..."
+                  placeholder="Örn., API entegrasyonu başlayacak..."
                   value={standupNext}
                   onChange={e => setStandupNext(e.target.value)}
                 />
               </div>
 
               <div className="form-group" style={{ marginTop: 12 }}>
-                <label>Any blockers?</label>
+                <label>Herhangi bir engel var mı?</label>
                 <textarea 
                   className="input textarea" 
                   rows={2} 
-                  placeholder="E.g., Waiting for API keys..."
+                  placeholder="Örn., API anahtarlarını bekliyorum..."
                   value={standupBlockers}
                   onChange={e => setStandupBlockers(e.target.value)}
                 />
@@ -208,7 +212,7 @@ export default function MemberPortal({ data, apiPost, fetchData, showAlert }) {
                 onClick={handleStandupSubmit}
                 disabled={submittingStandup}
               >
-                {submittingStandup ? 'Submitting...' : 'Submit Standup'}
+                {submittingStandup ? 'Gönderiliyor...' : 'Standup Gönder'}
               </button>
             </div>
           </div>
@@ -218,6 +222,20 @@ export default function MemberPortal({ data, apiPost, fetchData, showAlert }) {
         {tab === 'profile' && (
           <Profile user={data.user} completedTasks={data.completedTasks} standups={data.myStandups} />
         )}
+      </div>
+
+      {/* ======== BOTTOM NAVIGATION ======== */}
+      <div className="bottom-tab-bar">
+        {tabs.map(t => (
+          <button
+            key={t.key}
+            className={`bottom-tab-btn ${tab === t.key ? 'active' : ''}`}
+            onClick={() => { triggerHaptic('light'); setTab(t.key); }}
+          >
+            {t.icon}
+            <span>{t.label}</span>
+          </button>
+        ))}
       </div>
     </div>
   );

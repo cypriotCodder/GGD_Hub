@@ -119,7 +119,7 @@ export default function Analytics({ data }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 500 }}>{u.first_name} {u.username ? `(@${u.username})` : ''}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{u.points} total points</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{u.puan} total puan</div>
                 </div>
                 <div style={{ fontSize: 13, color: '#f59e0b', fontWeight: 600 }}>
                   {u.daysSinceActive} days ago

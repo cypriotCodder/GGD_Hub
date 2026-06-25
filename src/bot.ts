@@ -11,8 +11,9 @@ import { Bot, session } from "grammy";
 import { conversations, createConversation } from "@grammyjs/conversations";
 import { config } from "./config";
 import type { MyContext, SessionData } from "./types";
-import { supabase } from "./services/db";
+import { supabase, claimTask, completeTask } from "./services/db";
 import { createSupabaseStorage } from "./storage/supabase-adapter";
+import { completeTaskKeyboard } from "./keyboards";
 
 // Feature Composers
 import startFeature from "./features/start";
@@ -55,7 +56,7 @@ bot.use(createConversation(standupConversation, "standup"));
 bot.use(createConversation(addCommitteeConversation, "addCommittee"));
 bot.use(createConversation(promoteLeaderConversation, "promoteLeader"));
 
-// 4. Handle the "Start Standup" button from cron DMs
+// 4. Handle the "Standup'a Başla" button from cron DMs
 bot.callbackQuery("start_standup", async (ctx) => {
   await ctx.answerCallbackQuery();
 
@@ -66,7 +67,7 @@ bot.callbackQuery("start_standup", async (ctx) => {
       { parse_mode: "HTML" }
     );
   } catch {
-    // Message may have already been edited
+    // Mesaj may have already been edited
   }
 
   await ctx.conversation.enter("standup");
@@ -83,14 +84,14 @@ bot.use(adminFeature);
 // 6. Report chat ID when added to a new group
 bot.on("my_chat_member", async (ctx) => {
   const newStatus = ctx.myChatMember.new_chat_member.status;
-  if (newStatus === "member" || newStatus === "administrator") {
+  if (newStatus === "üye" || newStatus === "yöneticiistrator") {
     const chat = ctx.chat;
     try {
       await ctx.api.sendMessage(
         chat.id,
-        `👋 <b>Hi! Thanks for adding me.</b>\n\n` +
-        `My Chat ID for this group is: <code>${chat.id}</code>\n\n` +
-        `Use this ID in the Web Dashboard to register this committee.`,
+        `👋 <b>Merhaba! Beni eklediğiniz için teşekkürler.</b>\n\n` +
+        `My Sohbet ID for this group is: <code>${chat.id}</code>\n\n` +
+        `Bu komiteyi kaydetmek için bu ID'yi Web Dashboard'da kullanın.`,
         { parse_mode: "HTML" }
       );
     } catch (e) {
@@ -99,7 +100,50 @@ bot.on("my_chat_member", async (ctx) => {
   }
 });
 
-// 7. Catch-all for unhandled callback queries (prevents loading spinners)
+// 7. Inline Görevi Al Handler
+bot.callbackQuery(/^claim_task:(.+)$/, async (ctx) => {
+  const taskId = ctx.match[1];
+  try {
+    const task = await claimTask(taskId, ctx.from.id);
+    if (!task) {
+      await ctx.answerCallbackQuery("⚠️ Görev zaten alınmış veya bulunamadı.");
+      return;
+    }
+    await ctx.answerCallbackQuery("✅ Görev Alındı!");
+    await ctx.editMessageText(
+      `🎯 <b>Görev Alındı:</b> ${task.title}\n\nYou are now assigned to this task. Tap 'Tamamlandı Olarak İşaretle' when finished to earn +${task.point_value} puan.`,
+      {
+        parse_mode: "HTML",
+        reply_markup: completeTaskKeyboard(task.id)
+      }
+    );
+  } catch (e: any) {
+    await ctx.answerCallbackQuery("⚠️ Error claiming task: " + e.message);
+  }
+});
+
+// 8. Inline Complete Task Handler
+bot.callbackQuery(/^complete_task:(.+)$/, async (ctx) => {
+  const taskId = ctx.match[1];
+  try {
+    const task = await completeTask(taskId);
+    if (!task) {
+      await ctx.answerCallbackQuery("⚠️ Görev tamamlanamadı.");
+      return;
+    }
+    await ctx.answerCallbackQuery("🎉 Task Tamamlandı!");
+    await ctx.editMessageText(
+      `✅ <b>Task Tamamlandı:</b> ${task.title}\n\nHarika iş! Kazandığınız puan: +${task.point_value} puan.`,
+      {
+        parse_mode: "HTML"
+      }
+    );
+  } catch (e: any) {
+    await ctx.answerCallbackQuery("⚠️ Error completing task: " + e.message);
+  }
+});
+
+// 9. Catch-all for unhandled callback queries (prevents loading spinners)
 bot.on("callback_query:data", async (ctx) => {
   console.warn(`[Bot] Unhandled callback query: ${ctx.callbackQuery.data}`);
   await ctx.answerCallbackQuery();
@@ -118,7 +162,7 @@ bot.catch((err) => {
 
   // Try to notify the user (best-effort)
   ctx
-    .reply("❌ An unexpected error occurred. Please try again later.")
+    .reply("❌ Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.")
     .catch(() => {
       // If even this fails, just log it
       console.error("[Bot] Failed to send error message to user");
